@@ -1,0 +1,24 @@
+{
+  "identifier" : "4F1C2B0A-5D7E-4C61-9B7A-3E2D1F0A9C11",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6740000001",
+      "localizations" : [
+        {
+          "description" : "Unlimited projects and counters, pattern viewer, reminders, timer and themes.",
+          "displayName" : "Rowbin Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.pattersonslade.rowbin.pro",
+      "referenceName" : "Rowbin Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {},
+  "subscriptionGroups" : [],
+  "version" : { "major" : 2, "minor" : 0 }
+}

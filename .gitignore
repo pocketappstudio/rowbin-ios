@@ -1,0 +1,6 @@
+Rowbin.xcodeproj/
+build/
+DerivedData/
+*.xcresult
+xcuserdata/
+.DS_Store

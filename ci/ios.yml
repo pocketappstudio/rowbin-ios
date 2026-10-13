@@ -1,0 +1,46 @@
+name: iOS build & tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build-test:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode version
+        run: xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build unsigned simulator app
+        run: |
+          set -o pipefail
+          xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build | tee build.log | xcpretty || (tail -200 build.log; exit 1)
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in sorted(d.items(), reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          echo "Simulator: $UDID"
+          xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -destination "id=$UDID" -derivedDataPath build \
+            -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO test | tee test.log | xcpretty || (tail -200 test.log; exit 1)
+      - name: Package simulator app
+        if: always()
+        run: |
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name 'Rowbin.app' | head -1)
+          if [ -n "$APP" ]; then (cd "$(dirname "$APP")" && zip -qr "$GITHUB_WORKSPACE/Rowbin-simulator.zip" Rowbin.app); fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rowbin-ios-simulator
+          path: |
+            Rowbin-simulator.zip
+            TestResults.xcresult
+            build.log
+            test.log
+          if-no-files-found: ignore

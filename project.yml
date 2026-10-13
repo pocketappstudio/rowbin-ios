@@ -1,0 +1,93 @@
+name: Rowbin
+options:
+  bundleIdPrefix: com.pattersonslade
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  Rowbin:
+    type: application
+    platform: iOS
+    sources:
+      - Rowbin
+      - Shared
+      - path: Rowbin.storekit
+        buildPhase: none
+    info:
+      path: Rowbin/Info.plist
+      properties:
+        CFBundleDisplayName: Rowbin
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: AccentColor
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.pattersonslade.rowbin
+            CFBundleURLSchemes: [rowbin]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSupportsIndirectInputEvents: true
+    entitlements:
+      path: Rowbin/Rowbin.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.pattersonslade.rowbin
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pattersonslade.rowbin
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - target: RowbinWidgets
+  RowbinWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - RowbinWidgets
+      - Shared
+    info:
+      path: RowbinWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Rowbin
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: RowbinWidgets/RowbinWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.pattersonslade.rowbin
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pattersonslade.rowbin.widgets
+  RowbinTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - RowbinTests
+    dependencies:
+      - target: Rowbin
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Rowbin:
+    build:
+      targets:
+        Rowbin: all
+        RowbinTests: [test]
+    test:
+      targets:
+        - RowbinTests
+    run:
+      storeKitConfiguration: Rowbin.storekit
