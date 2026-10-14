@@ -4,7 +4,7 @@ import WidgetKit
 /// Rowbin Pro: one non-consumable in-app purchase via StoreKit 2.
 @MainActor
 final class ProStore: ObservableObject {
-    static let productID = "com.pattersonslade.rowbin.pro"
+    static let productID = "com.pocketappstudio.rowbin.pro"
 
     @Published private(set) var product: Product?
     @Published private(set) var isPro: Bool = SharedStore.proCached

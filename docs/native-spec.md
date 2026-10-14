@@ -99,7 +99,7 @@ All times are epoch milliseconds. Every change saves immediately. The web app al
 - Gating: a "<Feature> is part of Pro" sheet with the feature list, a Buy button and Restore Purchases.
 
 **Store billing replaces the Gumroad license key**
-- iOS: StoreKit 2, product id `com.pattersonslade.rowbin.pro`.
+- iOS: StoreKit 2, product id `com.pocketappstudio.rowbin.pro`.
 - Android: Google Play Billing. Suggested product id `rowbin_pro`; Play product ids must be lowercase.
 - Suggested price $4.99, NOT final.
 - A refund or revocation turns Pro off. Projects are never touched.
@@ -133,7 +133,7 @@ Haptics follow the "Vibrate on tap" setting.
 - **Lock screen** (iOS circular, rectangular and inline): row count only. Android phones don't have lock-screen widgets.
 - Widget buttons use the same counting rules: undo snapshot, linked counters, log entry, and lock respected.
 - Data sharing:
-  - iOS: App Group `group.com.pattersonslade.rowbin`, holding the state JSON with coordinated writes.
+  - iOS: App Group `group.com.pocketappstudio.rowbin`, holding the state JSON with coordinated writes.
   - Android: the app's own storage, refreshed with Glance `updateAll`.
 
 ## Apple store asset specs (checked against App Store Connect Help, Oct 13, 2026)

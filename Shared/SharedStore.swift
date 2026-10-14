@@ -3,7 +3,7 @@ import Foundation
 /// State shared between the app and its widgets through the App Group container.
 /// Writes are atomic and coordinated so the widget's +1/-1 buttons and the app never clobber each other.
 enum SharedStore {
-    static let groupID = "group.com.pattersonslade.rowbin"
+    static let groupID = "group.com.pocketappstudio.rowbin"
     static let proKey = "rowbin.proCached"
 
     static var container: URL {
