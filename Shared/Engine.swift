@@ -121,6 +121,10 @@ enum Engine {
     static func canAddProject(count: Int, pro: Bool) -> Bool { pro || count < freeProjectLimit }
     static func canAddCounter(_ p: Project, pro: Bool) -> Bool { pro || p.counters.count < freeExtraCounters }
     static func effectiveTheme(_ s: Settings, pro: Bool) -> String { pro ? s.theme : "oat" }
+    /// No movement when iOS Reduce Motion is on (everyone), in a Calm theme, or with the Pro Reduce motion setting.
+    static func reduceMotion(_ s: Settings, pro: Bool, system: Bool) -> Bool {
+        system || (pro && s.reduceMotion) || ["calm", "dusk"].contains(effectiveTheme(s, pro: pro))
+    }
 
     static func targetLine(_ p: Project) -> String? {
         guard let t = p.target, t > 0 else { return nil }
@@ -144,4 +148,19 @@ func plural(_ n: Int, _ w: String) -> String { "\(n) \(w)\(n == 1 ? "" : "s")" }
 func fmtDur(_ ms: Double) -> String {
     let s = max(0, Int(ms / 1000)), h = s / 3600, m = (s % 3600) / 60, sec = s % 60
     return String(format: "%d:%02d:%02d", h, m, sec)
+}
+
+/// Pure markup helpers (unit tested).
+enum MarkupMath {
+    /// Removes marks on `page` that pass within `radius` (fraction of page width) of point `at` (page fractions).
+    /// `aspect` is page height / width, so the eraser is round on screen.
+    static func erase(_ marks: [Mark], page: Int, at: CGPoint, aspect: CGFloat, radius: Double = 0.025) -> [Mark] {
+        marks.filter { m in
+            guard m.page == page else { return true }
+            return !stride(from: 0, to: m.pts.count - 1, by: 2).contains { i in
+                let dx = m.pts[i] - Double(at.x), dy = (m.pts[i + 1] - Double(at.y)) * Double(aspect)
+                return dx * dx + dy * dy < radius * radius
+            }
+        }
+    }
 }

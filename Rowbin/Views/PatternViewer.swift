@@ -84,6 +84,16 @@ struct PatternViewer: View {
     @State private var replace = false
     @State private var confirmRemove = false
     @State private var scrollRequest = 0
+    @StateObject private var voice = VoiceCounter()
+    // Chart markup (Pro)
+    @State private var markup = false
+    @State private var tool = "pen"            // "pen" | "hl" | "erase"
+    @State private var penColor = MarkupPalette.pen[0]
+    @State private var hlColor = MarkupPalette.highlight[0]
+    @State private var thick = false
+    @State private var live: Mark?
+    @State private var confirmClear = false
+    @State private var confirmReplace = false
 
     private var project: Project? { model.state.project(projectID) }
     private var pt: PatternInfo { project?.pattern ?? PatternInfo(name: "Pattern", type: "pdf") }
@@ -107,6 +117,28 @@ struct PatternViewer: View {
                     .onChange(of: geo.size) { _, s in viewport = s; scrollRequest += 1 }
             }
 
+            VStack(spacing: 8) {
+                VoiceStatus(voice: voice)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        VoiceChip(voice: voice)
+                        Chip(on: markup, label: markup ? "✏️ Markup on" : "✏️ Markup", pro: true) {
+                            if !model.isPro { model.openPro("Chart markup"); return }
+                            markup.toggle()
+                            if markup && !pt.showMarks { model.update(projectID) { $0.pattern?.showMarks = true } }
+                        }
+                        if !markup && !pt.marks.isEmpty {
+                            Chip(on: !pt.showMarks, label: pt.showMarks ? "Hide markup" : "Show markup") {
+                                model.update(projectID) { $0.pattern?.showMarks.toggle() }
+                            }
+                        }
+                    }
+                }
+                if markup { markupTools }
+            }
+            .padding(.horizontal, 10).padding(.top, 8)
+            .background(t.card)
+
             HStack(spacing: 8) {
                 Button { moveLine(-1) } label: { Image(systemName: "arrowtriangle.up.fill").frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line up")
                 Button { moveLine(1) } label: { Image(systemName: "arrowtriangle.down.fill").frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line down")
@@ -123,11 +155,23 @@ struct PatternViewer: View {
         .foregroundStyle(t.text)
         .tint(t.accent)
         .task {
+            #if DEBUG
+            if Demo.screen == "markup" { markup = true; tool = "hl" }
+            #endif
             doc = PatternDoc(projectID: projectID, type: pt.type)
             failed = doc == nil
             scrollRequest += 1
         }
+        .modifier(VoiceSession(voice: voice, projectID: projectID))
         .sheet(isPresented: $showMenu) { menu }
+        .alert("Clear all markup?", isPresented: $confirmClear) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear", role: .destructive) { model.update(projectID) { $0.pattern?.marks = [] } }
+        } message: { Text("This removes every mark you drew on this pattern. The pattern itself isn’t changed.") }
+        .alert("Replace pattern file?", isPresented: $confirmReplace) {
+            Button("Cancel", role: .cancel) {}
+            Button("Choose file") { replace = true }
+        } message: { Text("Your markup belongs to this file, so it will be removed when you choose a new one.") }
         .fileImporter(isPresented: $replace, allowedContentTypes: [.pdf, .image]) { result in
             if case .success(let url) = result {
                 PatternImport.importFile(url, projectID: projectID, model: model) { ok in
@@ -186,14 +230,17 @@ struct PatternViewer: View {
                         ForEach(0..<doc.pageCount, id: \.self) { i in
                             PageImage(doc: doc, index: i, pixelWidth: min(w * min(displayScale, 2), 2200))
                                 .frame(width: w, height: hs[i])
+                                .overlay { MarksLayer(marks: pageMarks(i)).allowsHitTesting(false) }
                         }
                     }
                     .frame(width: w, height: total, alignment: .top)
                     .contentShape(Rectangle())
                     .onTapGesture(coordinateSpace: .local) { loc in
+                        guard !markup else { return }
                         let nt = clampTop(loc.y - lh / 2, w: w)
                         store(top: nt, w: w); model.haptic(.soft)
                     }
+                    .gesture(markup ? drawGesture(w: w) : nil)
                     .overlay(alignment: .topLeading) {
                         highlighter(width: w, height: lh)
                             .id("hl")
@@ -209,9 +256,11 @@ struct PatternViewer: View {
                                     }
                             )
                             .padding(.top, top)
+                            .allowsHitTesting(!markup)
                     }
                     .background(GeometryReader { g in Color.clear.preference(key: ScrollYKey.self, value: g.frame(in: .named("vscroll")).minY) })
                 }
+                .scrollDisabled(markup)
                 .coordinateSpace(name: "vscroll")
                 .onPreferenceChange(ScrollYKey.self) { scrollY = $0 }
                 .onChange(of: scrollRequest) { _, _ in
@@ -268,9 +317,12 @@ struct PatternViewer: View {
                         Button("Thicker") { resize(1.25) }.buttonStyle(.bordered).frame(maxWidth: .infinity)
                     }
                 }
-                Muted("Tip: tap anywhere on the pattern to move the line there, or drag it by the ⇕ handle.")
+                if !pt.marks.isEmpty {
+                    Toggle(isOn: Binding(get: { pt.showMarks }, set: { v in model.update(projectID) { $0.pattern?.showMarks = v } })) { Text("Show markup") }
+                }
+                Muted("Tip: tap anywhere on the pattern to move the line there, or drag it by the ⇕ handle. Tap ✏️ Markup to draw on the pattern; tap Done to scroll again.")
                 Section {
-                    Button("Replace pattern file") { showMenu = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { replace = true } }
+                    Button("Replace pattern file") { showMenu = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { if pt.marks.isEmpty { replace = true } else { confirmReplace = true } } }
                     Button("Remove pattern", role: .destructive) { showMenu = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmRemove = true } }
                 }
             }
@@ -280,6 +332,86 @@ struct PatternViewer: View {
         }
         .presentationDetents([.medium, .large])
     }
+    // MARK: markup
+    private func pageMarks(_ i: Int) -> [Mark] {
+        guard pt.showMarks || markup else { return [] }
+        return pt.marks.filter { $0.page == i } + [live].compactMap { $0 }.filter { $0.page == i }
+    }
+    private func pageAt(_ y: CGFloat, w: CGFloat) -> Int {
+        let hs = heights(w), os = offsets(w)
+        return hs.indices.first { y < os[$0] + hs[$0] } ?? max(0, hs.count - 1)
+    }
+    private func frac(_ p: CGPoint, page: Int, w: CGFloat) -> CGPoint {
+        let hs = heights(w), os = offsets(w)
+        return CGPoint(x: min(1, max(0, p.x / w)), y: min(1, max(0, (p.y - os[page]) / hs[page])))
+    }
+    private func drawGesture(w: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { v in
+                guard !heights(w).isEmpty else { return }
+                if tool == "erase" { eraseAt(v.location, w: w); return }
+                if live == nil {
+                    let pg = pageAt(v.location.y, w: w), f = frac(v.location, page: pg, w: w)
+                    let sw = tool == "hl" ? (thick ? 0.04 : 0.025) : (thick ? 0.009 : 0.0045)
+                    live = Mark(page: pg, tool: tool, color: tool == "hl" ? hlColor : penColor, w: sw, pts: [f.x, f.y])
+                    return
+                }
+                guard var m = live, m.pts.count < Mark.maxPoints * 2 else { return }
+                let f = frac(v.location, page: m.page, w: w)
+                let dx = (f.x - m.pts[m.pts.count - 2]) * w, dy = (f.y - m.pts[m.pts.count - 1]) * heights(w)[m.page]
+                if dx * dx + dy * dy >= 4 { m.pts += [f.x, f.y]; live = m }
+            }
+            .onEnded { _ in
+                if let m = live, m.pts.count >= 4 {
+                    model.update(projectID) { p in
+                        p.pattern?.marks.append(m)
+                        if let n = p.pattern?.marks.count, n > PatternInfo.maxMarks { p.pattern?.marks.removeFirst(n - PatternInfo.maxMarks) }
+                        p.pattern?.showMarks = true
+                    }
+                }
+                live = nil
+            }
+    }
+    private func eraseAt(_ p: CGPoint, w: CGFloat) {
+        let pg = pageAt(p.y, w: w), f = frac(p, page: pg, w: w)
+        let aspect = heights(w)[pg] / w
+        let removed = MarkupMath.erase(pt.marks, page: pg, at: f, aspect: aspect)
+        if removed.count != pt.marks.count { model.update(projectID) { $0.pattern?.marks = removed }; model.haptic(.soft) }
+    }
+
+    private var markupTools: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Chip(on: tool == "pen", label: "✒️ Pen") { tool = "pen" }
+                Chip(on: tool == "hl", label: "🖍 Highlighter") { tool = "hl" }
+                Chip(on: tool == "erase", label: "🧽 Eraser") { tool = "erase" }
+            }
+            HStack(spacing: 10) {
+                let colors = tool == "hl" ? MarkupPalette.highlight : MarkupPalette.pen
+                let sel = tool == "hl" ? hlColor : penColor
+                ForEach(colors, id: \.self) { c in
+                    Button { if tool == "hl" { hlColor = c } else { penColor = c } } label: {
+                        Circle().fill(MarkupPalette.color(c).opacity(tool == "hl" ? 0.7 : 1)).frame(width: 34, height: 34)
+                            .overlay(Circle().stroke(model.theme.text, lineWidth: sel == c && tool != "erase" ? 3 : 0))
+                    }
+                    .buttonStyle(.plain).disabled(tool == "erase").opacity(tool == "erase" ? 0.4 : 1)
+                    .accessibilityLabel("Colour \((colors.firstIndex(of: c) ?? 0) + 1)").accessibilityAddTraits(sel == c ? .isSelected : [])
+                }
+                Spacer()
+                Chip(on: !thick, label: "Thin") { thick = false }
+                Chip(on: thick, label: "Thick") { thick = true }
+            }
+            HStack(spacing: 8) {
+                Button { model.update(projectID) { _ = $0.pattern?.marks.popLast() }; model.haptic(.soft) } label: { Text("↶ Undo mark").frame(maxWidth: .infinity) }
+                    .buttonStyle(.bordered).disabled(pt.marks.isEmpty)
+                Button { confirmClear = true } label: { Text("Clear").frame(maxWidth: .infinity) }
+                    .buttonStyle(.bordered).tint(RowbinTheme.danger).disabled(pt.marks.isEmpty)
+                Button { markup = false } label: { Text("Done").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
+            }
+            Muted("Draw with one finger. Marks sit on top of your pattern; the pattern itself isn’t changed.")
+        }
+    }
+
     private func resize(_ f: Double) { model.update(projectID) { p in let s = p.pattern?.size ?? 0.035; p.pattern?.size = min(0.2, max(0.012, s * f)) } }
 }
 
@@ -300,5 +432,35 @@ private struct PageImage: View {
         }
         .onDisappear { image = nil }
         .accessibilityLabel("Pattern page \(index + 1)")
+    }
+}
+
+/// Markup colours (same as Android): muted inks, and soft highlighter tints that still show on white paper.
+enum MarkupPalette {
+    static let pen = ["#B5523B", "#2F6690", "#4F7A5A", "#2E2A26"]
+    static let highlight = ["#FFD54F", "#81C784", "#64B5F6", "#F48FB1"]
+    static func color(_ hex: String) -> Color {
+        guard Mark.isHex(hex), let v = UInt32(hex.dropFirst(), radix: 16) else { return Color(hex: 0xB5523B) }
+        return Color(hex: v)
+    }
+}
+
+/// Draws one page's marks. Positions are fractions of the page, so they stay put at every zoom level.
+struct MarksLayer: View {
+    let marks: [Mark]
+    var body: some View {
+        Canvas { ctx, size in
+            for m in marks {
+                let pts = stride(from: 0, to: m.pts.count - 1, by: 2).map { CGPoint(x: m.pts[$0] * size.width, y: m.pts[$0 + 1] * size.height) }
+                guard let first = pts.first else { continue }
+                let lw = max(1.5, m.w * size.width)
+                let color = MarkupPalette.color(m.color).opacity(m.isHighlighter ? 0.38 : 0.95)
+                if pts.count == 1 { ctx.fill(Path(ellipseIn: CGRect(x: first.x - lw / 2, y: first.y - lw / 2, width: lw, height: lw)), with: .color(color)); continue }
+                var path = Path(); path.move(to: first)
+                for i in 1..<pts.count { let a = pts[i - 1], b = pts[i]; path.addQuadCurve(to: CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2), control: a) }
+                path.addLine(to: pts[pts.count - 1])
+                ctx.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: lw, lineCap: m.isHighlighter ? .butt : .round, lineJoin: .round))
+            }
+        }
     }
 }

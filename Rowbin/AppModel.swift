@@ -18,6 +18,9 @@ final class AppModel: ObservableObject {
 
     init() {
         var s = SharedStore.load()
+        #if DEBUG
+        if Demo.active { s = Demo.state() }
+        #endif
         _ = Engine.ensureProject(&s)
         state = s
         SharedStore.save(s)
@@ -25,6 +28,9 @@ final class AppModel: ObservableObject {
         if let id = s.currentProject?.id { path = [.project(id)] }
     }
 
+    /// iOS Reduce Motion, mirrored from the environment by RootView.
+    @Published var systemReduceMotion = false
+    var still: Bool { Engine.reduceMotion(state.settings, pro: isPro, system: systemReduceMotion) }
     var theme: RowbinTheme { RowbinTheme.by(Engine.effectiveTheme(state.settings, pro: isPro)) }
 
     func reloadFromDisk() {
@@ -79,9 +85,9 @@ final class AppModel: ObservableObject {
 
     func lockedMsg() { showToast("Counter is locked. Tap 🔒 Locked to unlock.") }
 
-    func changeRows(_ id: String, _ delta: Int) {
+    func changeRows(_ id: String, _ delta: Int, fromVoice: Bool = false) {
         if state.settings.locked { lockedMsg(); return }
-        if debounced((delta > 0 ? "inc-" : "dec-") + id, 220) { return }
+        if !fromVoice, debounced((delta > 0 ? "inc-" : "dec-") + id, 220) { return }
         guard let i = state.index(id) else { return }
         let r = Engine.changeRows(&state.projects[i], delta, locked: false, pro: isPro)
         if r.changed { save() }

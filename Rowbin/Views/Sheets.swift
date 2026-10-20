@@ -127,7 +127,10 @@ struct ProFeatureList: View {
             Label("Unlimited extra & repeat counters (free: \(Engine.freeExtraCounters) per project)", systemImage: "plusminus")
             Label("Pattern viewer for PDFs & photos with a movable line highlighter", systemImage: "doc.richtext")
             Label("Project timer that keeps running when the app is closed (editable)", systemImage: "timer")
-            Label("Themes, including a dark mode", systemImage: "paintpalette")
+            Label("Chart markup: pen, highlighter and eraser on your pattern", systemImage: "pencil.tip")
+            Label("Voice counting: say “next”, “back” or “undo” (on-device, nothing recorded)", systemImage: "mic")
+            Label("Themes, including a dark mode and two Calm themes", systemImage: "paintpalette")
+            Label("Reduce motion", systemImage: "figure.walk.motion")
         }.font(.callout)
     }
 }

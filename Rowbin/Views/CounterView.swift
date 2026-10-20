@@ -20,6 +20,7 @@ struct CounterView: View {
     @State private var notes = ""
     @State private var notesSaved = false
     @State private var bump = 0
+    @StateObject private var voice = VoiceCounter()
 
     var p: Project { model.state.project(projectID) ?? Project() }
     var locked: Bool { model.state.settings.locked }
@@ -40,6 +41,7 @@ struct CounterView: View {
                                 countArea; controls
                             }
                             toolRow(proxy)
+                            VoiceStatus(voice: voice)
                             countersCard.id("counters")
                             timerCard.id("timer")
                             notesCard.id("notes")
@@ -105,6 +107,13 @@ struct CounterView: View {
         }
         .sheet(item: $counterEdit) { target in CounterSheet(projectID: projectID, counterID: target.counterID).environmentObject(model) }
         .sheet(isPresented: $editTimer) { TimerEditSheet(projectID: projectID).environmentObject(model) }
+        .modifier(VoiceSession(voice: voice, projectID: projectID))
+        .onChange(of: showPattern) { _, v in if v { voice.stop() } }
+        .onAppear {
+            #if DEBUG
+            if ["pattern", "markup"].contains(Demo.screen ?? "") { showPattern = true }
+            #endif
+        }
         .fullScreenCover(isPresented: $showPattern) { PatternViewer(projectID: projectID).environmentObject(model) }
         .fileImporter(isPresented: $importPattern, allowedContentTypes: [.pdf, .image]) { result in
             if case .success(let url) = result { PatternImport.importFile(url, projectID: projectID, model: model) { showPattern = $0 } }
@@ -193,6 +202,7 @@ struct CounterView: View {
                     model.state.settings.keepAwake.toggle(); model.save()
                     model.showToast(model.state.settings.keepAwake ? "Screen will stay on while counting" : "Screen can sleep normally")
                 }
+                VoiceChip(voice: voice)
                 Chip(on: false, label: "📄 Pattern", pro: true) { patternAction() }
                 Chip(on: p.timer.runningSince != nil, label: "⏱ Timer", pro: true) {
                     if model.isPro { withAnimation { proxy.scrollTo("timer", anchor: .center) } } else { model.openPro("The project timer") }

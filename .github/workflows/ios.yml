@@ -29,6 +29,24 @@ jobs:
           echo "Simulator: $UDID"
           xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -destination "id=$UDID" -derivedDataPath build \
             -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO test | tee test.log | xcpretty || (tail -200 test.log; exit 1)
+      - name: Simulator screenshots of the Pro screens
+        if: success()
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in sorted(d.items(), reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 || true
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name 'Rowbin.app' | head -1)
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p screens
+          for s in counter voice pattern markup settings dusk; do
+            xcrun simctl terminate "$UDID" com.pocketappstudio.rowbin 2>/dev/null || true
+            xcrun simctl launch "$UDID" com.pocketappstudio.rowbin -rowbinDemo $s
+            sleep 6
+            xcrun simctl io "$UDID" screenshot "screens/$s.png"
+          done
+          xcrun simctl ui "$UDID" appearance light || true
+          ls -la screens
       - name: Package simulator app
         if: always()
         run: |
@@ -40,6 +58,7 @@ jobs:
           name: rowbin-ios-simulator
           path: |
             Rowbin-simulator.zip
+            screens/*.png
             TestResults.xcresult
             build.log
             test.log

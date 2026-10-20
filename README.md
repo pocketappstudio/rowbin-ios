@@ -12,6 +12,8 @@ Native SwiftUI version of Rowbin, the cozy row counter for knitting & crochet. I
   - Lock Screen: circular, rectangular and inline row count.
   - Widget data is shared through the App Group `group.com.pocketappstudio.rowbin`.
 - **Build:** `brew install xcodegen && xcodegen generate`, then open `Rowbin.xcodeproj`. CI (`.github/workflows/ios.yml`) builds an unsigned simulator app and runs the tests on every push.
+- **Pro features:** unlimited projects and counters, pattern viewer + highlighter, chart markup, on-device voice counting, timer, themes (incl. Calm), reduce motion.
+- **Screenshots:** CI captures DEBUG demo screens (`-rowbinDemo <screen>`) into the `rowbin-ios-simulator` artifact.
 - **Support:** the App Store listing or pocketappstudio.gumroad.com. No email or phone in the app.
 - **Legal:** About has a Terms card, terms + privacy links (pocketappstudio.github.io/rowbin/ios-terms.html, ios-privacy.html) and "Made by pocketappstudio".
 

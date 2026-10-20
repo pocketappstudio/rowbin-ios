@@ -43,6 +43,14 @@ struct SettingsView: View {
                     }
                 }
                 Card {
+                    HStack { Text("Motion").font(.headline); ProTag() }
+                    Toggle(isOn: Binding(get: { (st.reduceMotion && model.isPro) || model.still }, set: { v in
+                        if !model.isPro { model.openPro("Reduce motion"); return }
+                        model.state.settings.reduceMotion = v; model.save()
+                    })) { VStack(alignment: .leading) { Text("Reduce motion").bold(); Muted("No sliding or fading: numbers and screens change instantly. Rowbin also does this for everyone whenever Reduce Motion is on in your iPhone’s Accessibility settings, and always in the Calm themes.") } }
+                    .disabled(model.systemReduceMotion || RowbinTheme.by(Engine.effectiveTheme(st, pro: model.isPro)).calm)
+                }
+                Card {
                     Text("Backup & transfer").font(.headline)
                     Muted("Your projects are stored only on this iPhone. Save a backup file now and then (to Files, iCloud Drive or another app). To move to a new phone, restore it there. Backups also work with the Rowbin web app and the Android app.")
                     Text("**Last backup:** \(st.lastBackup.map { Date(timeIntervalSince1970: $0 / 1000).formatted(date: .abbreviated, time: .shortened) } ?? "never")").font(.footnote)
@@ -202,6 +210,6 @@ struct AboutView: View {
     var compareRows: [(String, String, String)] {
         [("Big row counter, undo, history", "✓", "✓"), ("Projects", "\(Engine.freeProjectLimit)", "∞"), ("Extra / repeat counters per project", "\(Engine.freeExtraCounters)", "∞"),
          ("Notes & project photo", "✓", "✓"), ("Backup export & import", "✓", "✓"), ("Keep screen on, lock, haptics", "✓", "✓"), ("Widgets", "✓", "✓"),
-         ("Pattern viewer + highlighter", "–", "✓"), ("Project timer", "–", "✓"), ("Themes & dark mode", "–", "✓"), ("Ads", "None", "None")]
+         ("Pattern viewer + highlighter", "–", "✓"), ("Project timer", "–", "✓"), ("Themes, dark mode & Calm themes", "–", "✓"), ("Reduce motion", "–", "✓"), ("Voice counting (on-device)", "–", "✓"), ("Chart markup", "–", "✓"), ("Ads", "None", "None")]
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var store: ProStore
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     var body: some View {
         let t = model.theme
         NavigationStack(path: $model.path) {
@@ -17,6 +18,10 @@ struct RootView: View {
         }
         .tint(t.accent)
         .preferredColorScheme(t.isDark ? .dark : .light)
+        .onAppear { model.systemReduceMotion = systemReduceMotion }
+        .onChange(of: systemReduceMotion) { _, v in model.systemReduceMotion = v }
+        // Reduce motion: numbers, screens, toasts and scrolling change instantly.
+        .transaction { if model.still { $0.disablesAnimations = true; $0.animation = nil } }
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
                 if let msg = model.toast {

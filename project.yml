@@ -28,6 +28,8 @@ targets:
         UILaunchScreen:
           UIColorName: AccentColor
         ITSAppUsesNonExemptEncryption: false
+        NSMicrophoneUsageDescription: "Voice counting (Rowbin Pro) listens for “next”, “back”, “undo” and “stop” while you turn it on. Audio is processed on this device only and is never recorded or sent anywhere."
+        NSSpeechRecognitionUsageDescription: "Voice counting uses your device’s on-device speech recognition to hear command words. Nothing is recorded, saved or sent to a server."
         CFBundleURLTypes:
           - CFBundleURLName: com.pocketappstudio.rowbin
             CFBundleURLSchemes: [rowbin]

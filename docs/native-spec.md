@@ -169,3 +169,9 @@ Haptics follow the "Vibrate on tap" setting.
 
 ## Removed 2026-10-19 (Slade's decision)
 Row reminders ("every N rows") and "at the same time" reminders are removed and must not be built. The extra counter's "repeat every N rows" rollover stays.
+
+## Pro upgrade (2026-10-19), iOS parity with Android
+- Calm themes `calm` (Calm Linen) and `dusk` (Calm Dusk, dark), same colours as Android; motion is always reduced in them.
+- Reduce motion: Pro setting `settings.reduceMotion`; also on for everyone when iOS Reduce Motion is on.
+- Voice counting (commands only): SFSpeechRecognizer with `requiresOnDeviceRecognition = true`, used only when `supportsOnDeviceRecognition` is true; never server recognition. Explainer before the permission prompts. Stops on leaving the screen, background, "stop", or 10 minutes idle. Counter and pattern screens. Nothing is read aloud.
+- Chart markup: pen, highlighter and eraser, 4 colours each, thin or thick, undo last mark, clear (confirm), show/hide; drawn over the original pages of the one pattern file. Keys `project.pattern.marks` and `project.pattern.showMarks` exactly as Android (see rowbin-android/PLAN.md). Unknown keys in settings, projects and patterns are preserved on save and backup.
