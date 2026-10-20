@@ -13,6 +13,6 @@ Native SwiftUI version of Rowbin, the cozy row counter for knitting & crochet. I
   - Widget data is shared through the App Group `group.com.pocketappstudio.rowbin`.
 - **Build:** `brew install xcodegen && xcodegen generate`, then open `Rowbin.xcodeproj`. CI (`.github/workflows/ios.yml`) builds an unsigned simulator app and runs the tests on every push.
 - **Support:** the App Store listing or pocketappstudio.gumroad.com. No email or phone in the app.
-- **Legal:** About has a Terms card, terms + privacy links (pocketappstudio.github.io/rowbin/terms.html, ios-privacy.html) and "Made by pocketappstudio".
+- **Legal:** About has a Terms card, terms + privacy links (pocketappstudio.github.io/rowbin/ios-terms.html, ios-privacy.html) and "Made by pocketappstudio".
 
 TestFlight: `.github/workflows/ios-testflight.yml` (manual `workflow_dispatch`, macos-26, fastlane `beta` lane; build number = run number; needs secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8).

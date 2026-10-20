@@ -186,7 +186,7 @@ struct AboutView: View {
                 Card {
                     Text("Terms").font(.headline)
                     Text("Rowbin is provided “as is”, without warranties of any kind. Your projects are stored only on this device, so keep your own backups. Rowbin Pro is a one-time purchase made through the App Store, not a subscription; purchases and refunds are handled by Apple.").font(.callout)
-                    Link("Full terms", destination: URL(string: "https://pocketappstudio.github.io/rowbin/terms.html")!)
+                    Link("Full terms", destination: URL(string: "https://pocketappstudio.github.io/rowbin/ios-terms.html")!)
                     Link("Privacy policy", destination: URL(string: "https://pocketappstudio.github.io/rowbin/ios-privacy.html")!)
                 }
                 Muted("Made by pocketappstudio")
