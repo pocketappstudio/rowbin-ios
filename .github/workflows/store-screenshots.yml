@@ -2,9 +2,13 @@ name: App Store screenshots
 on: { workflow_dispatch: {} }
 jobs:
   shots:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
+      - name: Select Xcode 26
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          sudo xcode-select -s "$X/Contents/Developer"
       - uses: actions/checkout@v4
       - run: brew install xcodegen && xcodegen generate
       - name: Build simulator app
@@ -12,6 +16,11 @@ jobs:
           set -o pipefail
           xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -configuration Debug -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -5
+      - name: Unit tests
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in sorted(d.items(), reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO test 2>&1 | grep -E "Executed|error:|failed" | tail -5
       - name: Capture
         run: |
           APP=build/Build/Products/Debug-iphonesimulator/Rowbin.app
