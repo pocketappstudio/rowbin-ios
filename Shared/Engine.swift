@@ -11,7 +11,6 @@ enum Engine {
     enum Feedback: Equatable { case none, soft, normal, strong }
     struct RowResult: Equatable {
         var changed = false
-        var reminderText: String? = nil
         var reachedTarget = false
         var feedback: Feedback = .none
         var blockedByLock = false
@@ -52,7 +51,6 @@ enum Engine {
         for i in p.counters.indices where p.counters[i].linked { bump(&p.counters[i], delta) }
         log(&p, "Row \(from) → \(to)")
         res.changed = true; res.feedback = .normal
-        if delta > 0, let text = reminderHits(p, pro: pro) { res.reminderText = text; res.feedback = .strong }
         if delta > 0, let t = p.target, to == t { res.reachedTarget = true; res.feedback = .strong }
         return res
     }
@@ -94,23 +92,6 @@ enum Engine {
         bump(&p.counters[i], dir)
         log(&p, "\(p.counters[i].name): \(from) → \(p.counters[i].value)")
         return true
-    }
-
-    // MARK: reminders (Pro)
-    static func reminderHits(_ p: Project, pro: Bool) -> String? {
-        guard pro else { return nil }
-        let hits = p.reminders.filter { $0.every > 0 && p.rows >= $0.start && (p.rows - $0.start) % $0.every == 0 }
-        return hits.isEmpty ? nil : hits.map(\.text).joined(separator: " · ")
-    }
-    static func nextReminderText(_ p: Project, pro: Bool) -> String? {
-        guard pro, !p.reminders.isEmpty else { return nil }
-        var best: (d: Int, r: Reminder)? = nil
-        for r in p.reminders where r.every > 0 {
-            let d = p.rows < r.start ? r.start - p.rows : (r.every - ((p.rows - r.start) % r.every)) % r.every
-            if best == nil || d < best!.d { best = (d, r) }
-        }
-        guard let b = best else { return nil }
-        return b.d == 0 ? "🔔 This row: \(b.r.text)" : "🔔 \(b.r.text) in \(plural(b.d, "row"))"
     }
 
     // MARK: timer (Pro), timestamp based so it keeps running while the app is closed

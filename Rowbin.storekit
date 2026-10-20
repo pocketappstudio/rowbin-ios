@@ -3,12 +3,12 @@
   "nonRenewingSubscriptions" : [],
   "products" : [
     {
-      "displayPrice" : "4.99",
+      "displayPrice" : "14.99",
       "familyShareable" : false,
       "internalID" : "6740000001",
       "localizations" : [
         {
-          "description" : "Unlimited projects and counters, pattern viewer, reminders, timer and themes.",
+          "description" : "Unlimited projects and counters, pattern viewer, timer and themes.",
           "displayName" : "Rowbin Pro",
           "locale" : "en_US"
         }

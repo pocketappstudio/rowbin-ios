@@ -19,7 +19,6 @@ struct RootView: View {
         .preferredColorScheme(t.isDark ? .dark : .light)
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
-                if let b = model.reminderBanner { ReminderBanner(text: b) { model.reminderBanner = nil } }
                 if let msg = model.toast {
                     Text(msg).font(.callout.weight(.semibold)).foregroundStyle(.white)
                         .padding(.horizontal, 18).padding(.vertical, 12)
@@ -30,29 +29,10 @@ struct RootView: View {
             }
             .padding(.bottom, 24).padding(.horizontal, 16)
             .animation(.spring(duration: 0.3), value: model.toast)
-            .animation(.spring(duration: 0.3), value: model.reminderBanner)
         }
         .sheet(isPresented: Binding(get: { model.proSheetFeature != nil }, set: { if !$0 { model.proSheetFeature = nil } })) {
             ProSheet(feature: model.proSheetFeature ?? nil).environmentObject(model).environmentObject(store)
         }
-    }
-}
-
-struct ReminderBanner: View {
-    @EnvironmentObject var model: AppModel
-    let text: String
-    let dismiss: () -> Void
-    var body: some View {
-        HStack(spacing: 12) {
-            Text("🔔").font(.system(size: 26))
-            Text(text).font(.body.weight(.semibold)).frame(maxWidth: .infinity, alignment: .leading)
-            Button("Got it", action: dismiss).buttonStyle(.borderedProminent)
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 16).fill(model.theme.card).shadow(radius: 8))
-        .foregroundStyle(model.theme.text)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
     }
 }
 

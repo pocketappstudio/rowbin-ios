@@ -101,7 +101,6 @@ struct RowbinWidgetView: View {
                     .minimumScaleFactor(0.5).lineLimit(1).contentTransition(.numericText(value: Double(p.rows)))
                 if let t = Engine.targetLine(p) { Text(t).font(.caption2).foregroundStyle(theme.muted) }
                 repeatLine(p)
-                if let r = Engine.nextReminderText(p, pro: entry.pro) { Text(r).font(.caption2).lineLimit(1) }
                 if entry.locked { Text("🔒 Locked").font(.caption2) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -154,7 +153,6 @@ struct RowbinWidgetView: View {
                 Text("Add an extra counter in Rowbin to see it here.").font(.caption).foregroundStyle(theme.muted)
             }
             Spacer(minLength: 0)
-            if let r = Engine.nextReminderText(p, pro: entry.pro) { Text(r).font(.caption) }
         }
         .foregroundStyle(theme.text)
     }

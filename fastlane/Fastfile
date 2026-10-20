@@ -1,0 +1,25 @@
+default_platform(:ios)
+platform :ios do
+  lane :beta do
+    setup_ci
+    api_key = app_store_connect_api_key(key_id: ENV["ASC_KEY_ID"], issuer_id: ENV["ASC_ISSUER_ID"], key_content: ENV["ASC_KEY_P8"])
+    team = ENV["APPLE_TEAM_ID"]
+    targets = { "Rowbin" => "com.pocketappstudio.rowbin", "RowbinWidgets" => "com.pocketappstudio.rowbin.widgets" }
+    # Distribution cert + App Store profiles created through the API key (no devices needed).
+    get_certificates(api_key: api_key, team_id: team, keychain_path: lane_context[SharedValues::KEYCHAIN_PATH] || "fastlane_tmp_keychain", keychain_password: "")
+    profiles = {}
+    targets.each_value do |id|
+      produce(api_key: api_key, app_identifier: id, team_id: team, skip_itc: true, enable_services: { app_group: "on" }) rescue UI.message("bundle id #{id} exists")
+      sigh(api_key: api_key, app_identifier: id, team_id: team, force: true, filename: "#{id}.mobileprovision")
+      profiles[id] = lane_context[SharedValues::SIGH_NAME]
+    end
+    increment_build_number(xcodeproj: "Rowbin.xcodeproj", build_number: ENV["GITHUB_RUN_NUMBER"])
+    targets.each do |target, id|
+      update_code_signing_settings(use_automatic_signing: false, path: "Rowbin.xcodeproj", targets: [target], team_id: team,
+        code_sign_identity: "Apple Distribution", profile_name: profiles[id], bundle_identifier: id)
+    end
+    build_app(project: "Rowbin.xcodeproj", scheme: "Rowbin", export_method: "app-store",
+      export_options: { signingStyle: "manual", teamID: team, provisioningProfiles: profiles })
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
+  end
+end

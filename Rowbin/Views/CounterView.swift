@@ -12,7 +12,6 @@ struct CounterView: View {
     @State private var editProject = false
     @State private var newProject = false
     @State private var counterEdit: CounterEditTarget?
-    @State private var addReminder = false
     @State private var editTimer = false
     @State private var showPattern = false
     @State private var importPattern = false
@@ -42,7 +41,6 @@ struct CounterView: View {
                             }
                             toolRow(proxy)
                             countersCard.id("counters")
-                            remindersCard.id("reminders")
                             timerCard.id("timer")
                             notesCard.id("notes")
                             photoCard
@@ -106,7 +104,6 @@ struct CounterView: View {
             }.environmentObject(model)
         }
         .sheet(item: $counterEdit) { target in CounterSheet(projectID: projectID, counterID: target.counterID).environmentObject(model) }
-        .sheet(isPresented: $addReminder) { ReminderSheet(projectID: projectID).environmentObject(model) }
         .sheet(isPresented: $editTimer) { TimerEditSheet(projectID: projectID).environmentObject(model) }
         .fullScreenCover(isPresented: $showPattern) { PatternViewer(projectID: projectID).environmentObject(model) }
         .fileImporter(isPresented: $importPattern, allowedContentTypes: [.pdf, .image]) { result in
@@ -134,7 +131,7 @@ struct CounterView: View {
                 .contentTransition(.numericText(value: Double(p.rows)))
                 .scaleEffect(bump % 2 == 0 ? 1 : 1.0001)
                 .accessibilityLabel("\(p.isCrochet ? "Row or round" : "Row") \(p.rows)")
-            ForEach([Engine.targetLine(p), Engine.nextReminderText(p, pro: model.isPro)].compactMap { $0 }, id: \.self) { line in
+            ForEach([Engine.targetLine(p)].compactMap { $0 }, id: \.self) { line in
                 Text(line).font(.callout).foregroundStyle(t.muted).multilineTextAlignment(.center)
             }
             if locked {
@@ -226,30 +223,6 @@ struct CounterView: View {
                 Muted("Use these for stitches, increases or a pattern repeat. A linked counter moves with every row. Set “repeat every N rows” and it starts over after N and counts the repeats you’ve finished.")
             }
             ForEach(p.counters) { c in CounterRow(c: c, projectID: projectID) { counterEdit = CounterEditTarget(counterID: c.id) } }
-        }
-    }
-
-    var remindersCard: some View {
-        Card {
-            HStack {
-                Text("Row reminders").font(.headline); ProTag()
-                Spacer()
-                Button("+ Add") { if model.isPro { addReminder = true } else { model.openPro("Row reminders") } }.buttonStyle(.bordered)
-            }
-            if p.reminders.isEmpty {
-                Muted("Example: “Decrease row” every 6 rows. You get a nudge on the right row.")
-            }
-            ForEach(p.reminders) { r in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(r.text).font(.body.weight(.semibold))
-                        Muted("Every \(plural(r.every, "row")), starting at row \(r.start)")
-                    }
-                    Spacer()
-                    Button { model.update(projectID) { $0.reminders.removeAll { $0.id == r.id } } } label: { Image(systemName: "xmark") }
-                        .buttonStyle(.bordered).accessibilityLabel("Delete reminder")
-                }
-            }
         }
     }
 
@@ -406,10 +379,10 @@ struct TipsCard: View {
         Card {
             Text("Welcome to Rowbin 🧶").font(.headline)
             VStack(alignment: .leading, spacing: 6) {
-                Text("1. Tap the big **+** at the end of each row. Every tap saves right away, so closing the app never loses your place.")
+                Text("1. Tap the big **+** at the end of each row. Every tap saves right away.")
                 Text("2. Tapped by mistake? Hit **Undo**. Every change is also kept in the History log.")
                 Text("3. Add a **repeat counter** below for patterns like “8-row repeat × 39”. It rolls over at 8 and counts the repeats for you.")
-                Text("4. Free forever: no ads, no account. Pro is an optional **one-time** unlock.")
+                Text("4. Free: no ads, no account. Pro is an optional **one-time** unlock.")
             }.font(.footnote)
             Button("Got it") { model.state.settings.tipsSeen = true; model.save() }.buttonStyle(.bordered)
         }

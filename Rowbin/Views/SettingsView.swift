@@ -58,7 +58,7 @@ struct SettingsView: View {
                         Text("✓ Pro is unlocked for your Apple Account.")
                         Muted("It works on every iPhone and iPad signed in with the same Apple Account. Use Restore Purchases on a new device.")
                     } else {
-                        Text("One-time\(store.priceText.isEmpty ? "" : ", \(store.priceText)"). No subscription.").font(.footnote)
+                        Text("\(store.priceText.isEmpty ? "O" : "\(store.priceText), o")ne-time purchase, no subscription.").font(.footnote)
                         Button { model.openPro() } label: { Text("See what Pro adds").frame(maxWidth: .infinity) }.buttonStyle(.bordered)
                     }
                     Button { Task { await store.restore() } } label: { Text("Restore Purchases").frame(maxWidth: .infinity) }.buttonStyle(.bordered).disabled(store.busy)
@@ -135,10 +135,10 @@ struct AboutView: View {
                     Image("AboutIcon").resizable().frame(width: 96, height: 96).clipShape(RoundedRectangle(cornerRadius: 22)).accessibilityHidden(true)
                     Text("Rowbin").font(.largeTitle.bold())
                     Text("The cozy row counter for knitting & crochet.").bold()
-                    Text("No ads. Ever. No account. No subscription. Works offline.").font(.callout)
+                    Text("No ads. No account. No subscription. Works offline.").font(.callout)
                 }.multilineTextAlignment(.center).padding(.vertical, 8)
                 Card {
-                    Text("Free forever").font(.headline)
+                    Text("Free").font(.headline)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("• The big row counter, with undo, reset and a full history log")
                         Text("• \(Engine.freeProjectLimit) projects with notes and a photo")
@@ -146,12 +146,12 @@ struct AboutView: View {
                         Text("• Backup export & import")
                         Text("• Keep-screen-on, lock and haptics")
                         Text("• Home Screen and Lock Screen widgets")
-                        Text("• No ads, ever. Nothing free will ever move to Pro.")
+                        Text("• No ads")
                     }.font(.callout)
                 }
                 Card {
-                    Text("Pro: one-time purchase").font(.headline)
-                    Muted("No subscription.")
+                    Text("Pro").font(.headline)
+                    Muted("$14.99, one-time purchase, no subscription.")
                     ProFeatureList()
                     if model.isPro { Text("✓ You have Pro. Thank you!") }
                     else { Button { model.openPro() } label: { Text("Get Pro").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(.borderedProminent) }
@@ -176,13 +176,20 @@ struct AboutView: View {
                         Text("**Keyboard or page turner:** Space, → or ↓ adds a row; ← or ↑ subtracts; U undoes.")
                         Text("**Turning the phone sideways** works fine. The counter switches to a side-by-side layout.")
                         Text("**New phone?** Settings → Save backup, then Restore on the new phone, and tap Restore Purchases for Pro.")
-                        Text("**Need help?** Use the support link on Rowbin’s App Store page.")
+                        Text("**Need help?** Use the support link on Rowbin’s App Store page, or visit pocketappstudio.gumroad.com.")
                     }.font(.callout)
                 }
                 Card {
                     Text("Privacy").font(.headline)
                     Text("Rowbin has no accounts, no ads, no analytics and no trackers. Your projects, notes, photos and patterns are stored only on your device and are never uploaded anywhere. Purchases are handled entirely by Apple through the App Store; Rowbin never sees your payment details. Backups are files you save yourself.").font(.callout)
                 }
+                Card {
+                    Text("Terms").font(.headline)
+                    Text("Rowbin is provided “as is”, without warranties of any kind. Your projects are stored only on this device, so keep your own backups. Rowbin Pro is a one-time purchase made through the App Store, not a subscription; purchases and refunds are handled by Apple.").font(.callout)
+                    Link("Full terms", destination: URL(string: "https://pocketappstudio.github.io/rowbin/terms.html")!)
+                    Link("Privacy policy", destination: URL(string: "https://pocketappstudio.github.io/rowbin/ios-privacy.html")!)
+                }
+                Muted("Made by pocketappstudio")
                 Muted("Rowbin \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
             }
             .padding(16)
@@ -195,6 +202,6 @@ struct AboutView: View {
     var compareRows: [(String, String, String)] {
         [("Big row counter, undo, history", "✓", "✓"), ("Projects", "\(Engine.freeProjectLimit)", "∞"), ("Extra / repeat counters per project", "\(Engine.freeExtraCounters)", "∞"),
          ("Notes & project photo", "✓", "✓"), ("Backup export & import", "✓", "✓"), ("Keep screen on, lock, haptics", "✓", "✓"), ("Widgets", "✓", "✓"),
-         ("Row reminders", "–", "✓"), ("Pattern viewer + highlighter", "–", "✓"), ("Project timer", "–", "✓"), ("Themes & dark mode", "–", "✓"), ("Ads", "Never", "Never")]
+         ("Pattern viewer + highlighter", "–", "✓"), ("Project timer", "–", "✓"), ("Themes & dark mode", "–", "✓"), ("Ads", "None", "None")]
     }
 }

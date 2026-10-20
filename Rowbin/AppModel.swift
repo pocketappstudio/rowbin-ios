@@ -9,7 +9,6 @@ final class AppModel: ObservableObject {
     @Published var state: AppState
     @Published var path: [Route] = []
     @Published var toast: String?
-    @Published var reminderBanner: String?
     @Published var proSheetFeature: String?? = nil   // .some(nil) = generic Pro sheet
     @Published var isPro = SharedStore.proCached { didSet { if oldValue != isPro { objectWillChange.send() } } }
     @Published var saveFailed = false
@@ -87,7 +86,6 @@ final class AppModel: ObservableObject {
         let r = Engine.changeRows(&state.projects[i], delta, locked: false, pro: isPro)
         if r.changed { save() }
         haptic(r.feedback)
-        if let t = r.reminderText { reminderBanner = "Row \(state.projects[i].rows): \(t)" }
         if r.reachedTarget { showToast("🎉 You reached row \(state.projects[i].rows)!", seconds: 3) }
     }
     func undo(_ id: String) {

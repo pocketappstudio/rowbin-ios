@@ -85,52 +85,6 @@ struct CounterSheet: View {
     }
 }
 
-struct ReminderSheet: View {
-    @EnvironmentObject var model: AppModel
-    @Environment(\.dismiss) private var dismiss
-    let projectID: String
-    @State private var text = ""
-    @State private var every = "6"
-    @State private var start = ""
-    @State private var touchedStart = false
-    @State private var error: String?
-
-    var rows: Int { model.state.project(projectID)?.rows ?? 0 }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Reminder") {
-                    TextField("e.g. Decrease row", text: $text).onChange(of: text) { _, v in if v.count > 60 { text = String(v.prefix(60)) } }
-                }
-                Section("Every N rows") {
-                    TextField("6", text: $every).keyboardType(.numberPad)
-                        .onChange(of: every) { _, v in if !touchedStart { start = String(rows + (Int(v) ?? 0)) } }
-                }
-                Section("First at row") {
-                    TextField("", text: Binding(get: { start }, set: { start = $0; touchedStart = true })).keyboardType(.numberPad)
-                }
-                if let error { Text(error).foregroundStyle(RowbinTheme.danger) }
-            }
-            .navigationTitle("Add a row reminder")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        guard let e = Int(every), e > 0 else { error = "Enter how many rows apart"; return }
-                        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        model.update(projectID) { $0.reminders.append(Reminder(text: t.isEmpty ? "Reminder" : t, every: e, start: max(0, Int(start) ?? 0))) }
-                        dismiss()
-                    }
-                }
-            }
-            .onAppear { start = String(rows + 6) }
-        }
-        .presentationDetents([.medium, .large])
-    }
-}
-
 struct TimerEditSheet: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
@@ -171,7 +125,6 @@ struct ProFeatureList: View {
         VStack(alignment: .leading, spacing: 6) {
             Label("Unlimited projects (free: \(Engine.freeProjectLimit))", systemImage: "square.stack")
             Label("Unlimited extra & repeat counters (free: \(Engine.freeExtraCounters) per project)", systemImage: "plusminus")
-            Label("“Every N rows” reminders", systemImage: "bell")
             Label("Pattern viewer for PDFs & photos with a movable line highlighter", systemImage: "doc.richtext")
             Label("Project timer that keeps running when the app is closed (editable)", systemImage: "timer")
             Label("Themes, including a dark mode", systemImage: "paintpalette")
@@ -189,7 +142,7 @@ struct ProSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(feature.map { "\($0) is part of Pro" } ?? "Rowbin Pro").font(.title2.bold())
-                    Text("**One-time purchase\(store.priceText.isEmpty ? "" : ", \(store.priceText)").** No subscription and no account. It keeps working offline, forever.")
+                    Text("**\(store.priceText.isEmpty ? "" : "\(store.priceText), ")one-time purchase, no subscription.** No account needed, and it works offline.")
                     ProFeatureList()
                     Button {
                         Task { if await store.purchase() { model.haptic(.strong); model.showToast("Pro unlocked. Thank you! 🧶", seconds: 4); dismiss() } }

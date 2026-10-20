@@ -16,7 +16,7 @@ Backup file `rowbin-backup-YYYY-MM-DD.json`: `{ app:"rowbin", schema:1, exported
 - `id`, `name` (max 60, default "My project"), `craft` (knit | crochet)
 - `rows` (>=0), `target` (int | null), `notes`, `hasPhoto`
 - `pattern`: null, or `{ name, type: pdf | image, page, rel, size (0.012-0.2, default 0.035), zoom (1-3, step 0.25), follow (default true) }`
-- `counters[]`, `reminders[]`
+- `counters[]` (a legacy `reminders[]` key from older data is ignored on load)
 - `undo[]`: max 100 snapshots, each `{ rows, c: [[counterId, value, repeats]] }`
 - `log[]`: max 500 entries, each `{ t: ms, m: text, r: rows }`
 - `timer`: `{ totalMs, runningSince: ms | null, sessions: [[start, end]] }`, max 1000 sessions
@@ -24,7 +24,6 @@ Backup file `rowbin-backup-YYYY-MM-DD.json`: `{ app:"rowbin", schema:1, exported
 
 **counter**: `id`, `name` (max 40), `value`, `linked` (default true), `resetAt` (int | null, means "repeat every N"), `repeats`, `repeatTarget` (int | null)
 
-**reminder**: `id`, `text` (max 60, default "Reminder"), `every` (>=1), `start` (>=0, default rows + 6)
 
 All times are epoch milliseconds. Every change saves immediately. The web app also keeps a last-known-good copy of the state.
 
@@ -69,7 +68,7 @@ All times are epoch milliseconds. Every change saves immediately. The web app al
   - Settings & backup
   - Delete (needs confirmation; also deletes the photo and pattern)
 
-## Free (forever; nothing free ever moves to Pro)
+## Free
 - Big row counter with undo, reset and full history.
 - 2 projects, each with autosaving notes and a photo (downscaled to 1400 px, JPEG quality 0.85).
 - 1 extra or repeat counter per project.
@@ -81,10 +80,6 @@ All times are epoch milliseconds. Every change saves immediately. The web app al
 
 ## Pro (one-time, non-consumable)
 - Unlimited projects (free: 2) and unlimited extra or repeat counters (free: 1 per project).
-- "Every N rows" reminders:
-  - A reminder fires when rows >= start and (rows − start) % every == 0. It shows a banner with a strong haptic.
-  - The line under the count shows "🔔 X in N rows" or "🔔 This row: X".
-  - Reminders only show and fire with Pro.
 - Pattern viewer for PDFs and photos (images downscaled to 2400 px):
   - Zoom 1×–3×.
   - Movable line highlighter, saved as (page, relative Y) so it survives zoom and rotation. It has a drag handle, tap-to-move and ▲/▼ buttons.
@@ -101,7 +96,7 @@ All times are epoch milliseconds. Every change saves immediately. The web app al
 **Store billing replaces the Gumroad license key**
 - iOS: StoreKit 2, product id `com.pocketappstudio.rowbin.pro`.
 - Android: Google Play Billing. Suggested product id `rowbin_pro`; Play product ids must be lowercase.
-- Suggested price $4.99, NOT final.
+- Price: $14.99, one-time purchase, no subscription (decided 2026-10-19).
 - A refund or revocation turns Pro off. Projects are never touched.
 
 | Theme | accent | background | card | text | muted |
@@ -121,12 +116,12 @@ Haptics follow the "Vibrate on tap" setting.
 |---|---|---|---|
 | normal | +1/−1, extra counter, timer | UIImpactFeedbackGenerator(.light) | HapticFeedbackConstants or VibrationEffect predefined effects |
 | soft | no-op at 0, undo, lock, pattern tap | .soft impact | same |
-| strong | target reached, reminder hit, Pro unlocked | UINotificationFeedbackGenerator(.success) | same |
+| strong | target reached, Pro unlocked | UINotificationFeedbackGenerator(.success) | same |
 
 ## Widgets
 - Show the last-opened project. Tapping the widget opens that project (`rowbin://project/<id>` on iOS).
 - **Small:** project name, row count, target %.
-- **Medium:** row count with interactive −1/+1, repeat progress of the first repeat counter (value/N and repeats done/goal), and the next reminder (Pro).
+- **Medium:** row count with interactive −1/+1, repeat progress of the first repeat counter (value/N and repeats done/goal).
 - **Large:** two counters, each with −1/+1:
   - the main rows, plus target progress
   - the first extra counter, or a prompt to add one if there isn't one
@@ -170,3 +165,7 @@ Haptics follow the "Vibrate on tap" setting.
 6. Family Sharing for Pro (currently off).
 7. iPhone only, or iPad too?
 8. The final price.
+
+
+## Removed 2026-10-19 (Slade's decision)
+Row reminders ("every N rows") and "at the same time" reminders are removed and must not be built. The extra counter's "repeat every N rows" rollover stays.

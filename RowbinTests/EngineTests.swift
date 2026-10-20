@@ -67,18 +67,15 @@ final class EngineTests: XCTestCase {
         XCTAssertTrue(r.reachedTarget); XCTAssertEqual(r.feedback, .strong)
         XCTAssertEqual(Engine.targetLine(p), "of 2 · 100%")
     }
-    func testRemindersOnlyWithPro() {
-        var p = Project(); p.reminders = [Reminder(text: "Decrease", every: 6, start: 6)]
-        for _ in 0..<5 { Engine.changeRows(&p, 1, locked: false, pro: true) }
-        XCTAssertEqual(Engine.nextReminderText(p, pro: true), "🔔 Decrease in 1 row")
-        XCTAssertNil(Engine.nextReminderText(p, pro: false))
-        var free = p
-        XCTAssertNil(Engine.changeRows(&free, 1, locked: false, pro: false).reminderText)
+    func testLegacyRemindersInSavedDataLoadWithoutCrash() throws {
+        let json = #"{"v":1,"settings":{},"projects":[{"id":"p1","name":"Old","rows":7,"reminders":[{"id":"r1","text":"Decrease","every":6,"start":6},{"bad":true}],"counters":[{"id":"c1","name":"Repeat","value":7,"resetAt":8}]}]}"#
+        let s = try JSONDecoder().decode(AppState.self, from: Data(json.utf8))
+        var p = try XCTUnwrap(s.projects.first)
+        XCTAssertEqual(p.rows, 7)
         let r = Engine.changeRows(&p, 1, locked: false, pro: true)
-        XCTAssertEqual(r.reminderText, "Decrease")
-        XCTAssertEqual(Engine.nextReminderText(p, pro: true), "🔔 This row: Decrease")
-        for _ in 0..<6 { Engine.changeRows(&p, 1, locked: false, pro: true) }
-        XCTAssertEqual(Engine.reminderHits(p, pro: true), "Decrease")
+        XCTAssertTrue(r.changed); XCTAssertEqual(p.counters[0].value, 8)
+        let out = String(decoding: try JSONEncoder().encode(p), as: UTF8.self)
+        XCTAssertFalse(out.contains("reminders"))
     }
     func testTimer() {
         var p = Project()

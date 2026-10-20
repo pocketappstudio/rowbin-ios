@@ -50,19 +50,6 @@ struct ExtraCounter: Codable, Identifiable, Equatable {
     }
 }
 
-struct Reminder: Codable, Identifiable, Equatable {
-    var id: String = UID.make()
-    var text: String = "Reminder"
-    var every: Int = 6
-    var start: Int = 0
-    init(id: String = UID.make(), text: String, every: Int, start: Int) { self.id = id; self.text = text; self.every = every; self.start = start }
-    enum CodingKeys: String, CodingKey { case id, text, every, start }
-    init(from d: Decoder) throws {
-        let c = try d.container(keyedBy: CodingKeys.self)
-        id = c.val(.id, UID.make()); text = c.val(.text, "Reminder"); every = c.int(.every, 0); start = max(0, c.int(.start, 0))
-    }
-}
-
 /// Undo snapshot: `{ rows, c: [[counterId, value, repeats]] }` exactly like the web app.
 struct UndoSnap: Codable, Equatable {
     struct Entry: Codable, Equatable {
@@ -138,7 +125,6 @@ struct Project: Codable, Identifiable, Equatable {
     var hasPhoto: Bool = false
     var pattern: PatternInfo? = nil
     var counters: [ExtraCounter] = []
-    var reminders: [Reminder] = []
     var undo: [UndoSnap] = []
     var log: [LogEntry] = []
     var timer = ProjectTimer()
@@ -151,13 +137,13 @@ struct Project: Codable, Identifiable, Equatable {
     }
     var isCrochet: Bool { craft == "crochet" }
 
-    enum CodingKeys: String, CodingKey { case id, name, craft, rows, target, notes, hasPhoto, pattern, counters, reminders, undo, log, timer, createdAt, updatedAt }
+    enum CodingKeys: String, CodingKey { case id, name, craft, rows, target, notes, hasPhoto, pattern, counters, undo, log, timer, createdAt, updatedAt }
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         id = c.val(.id, UID.make()); name = c.val(.name, "My project"); craft = c.val(.craft, "knit")
         rows = max(0, c.int(.rows, 0)); target = c.optInt(.target).flatMap { $0 > 0 ? $0 : nil }
         notes = c.val(.notes, ""); hasPhoto = c.val(.hasPhoto, false); pattern = c.val(.pattern, PatternInfo?.none)
-        counters = c.val(.counters, []); reminders = c.val(.reminders, [])
+        counters = c.val(.counters, [])  // legacy "reminders" key in old data/backups is ignored
         undo = Array(c.val(.undo, [UndoSnap]()).suffix(Engine.undoCap))
         log = Array(c.val(.log, [LogEntry]()).suffix(Engine.logCap))
         timer = c.val(.timer, ProjectTimer()); createdAt = c.val(.createdAt, nowMs()); updatedAt = c.val(.updatedAt, nowMs())
