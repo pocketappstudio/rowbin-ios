@@ -145,7 +145,7 @@ struct PatternViewer: View {
                 Button { row(-1) } label: { Text("−").font(.title.bold()).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Subtract a row")
                 Text("\(project?.rows ?? 0)").font(.system(size: 34, weight: .bold, design: .rounded)).monospacedDigit().frame(minWidth: 64)
                     .accessibilityLabel("Row \(project?.rows ?? 0)")
-                Button { row(1) } label: { Text("+").font(.largeTitle.bold()).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.borderedProminent).layoutPriority(1).accessibilityLabel("Add a row")
+                Button { row(1) } label: { Text("+").font(.largeTitle.bold()).foregroundStyle(model.theme.onAccent).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.borderedProminent).layoutPriority(1).accessibilityLabel("Add a row")
             }
             .padding(10)
             .background(t.card)
@@ -406,7 +406,7 @@ struct PatternViewer: View {
                     .buttonStyle(.bordered).disabled(pt.marks.isEmpty)
                 Button { confirmClear = true } label: { Text("Clear").frame(maxWidth: .infinity) }
                     .buttonStyle(.bordered).tint(RowbinTheme.danger).disabled(pt.marks.isEmpty)
-                Button { markup = false } label: { Text("Done").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
+                Button { markup = false } label: { Text("Done").foregroundStyle(model.theme.onAccent).frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
             }
             Muted("Draw with one finger. Marks sit on top of your pattern; the pattern itself isn’t changed.")
         }
