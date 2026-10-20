@@ -22,13 +22,14 @@ struct RowbinApp: App {
 
     private var demoPro: Bool {
         #if DEBUG
-        return Demo.active
+        return Demo.active && Demo.screen != "pro"
         #else
         return false
         #endif
     }
     private func demoRoute() {
         #if DEBUG
+        if Demo.screen == "pro" { model.proSheetFeature = .some(nil) }
         if Demo.screen == "settings", let id = model.state.currentProject?.id { model.path = [.project(id), .settings] }
         #endif
     }
