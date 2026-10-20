@@ -15,4 +15,4 @@ Native SwiftUI version of Rowbin, the cozy row counter for knitting & crochet. I
 - **Support:** the App Store listing or pocketappstudio.gumroad.com. No email or phone in the app.
 - **Legal:** About has a Terms card, terms + privacy links (pocketappstudio.github.io/rowbin/ios-terms.html, ios-privacy.html) and "Made by pocketappstudio".
 
-TestFlight: `.github/workflows/ios-testflight.yml` (manual `workflow_dispatch`, macos-26, fastlane `beta` lane; build number = run number; needs secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8).
+TestFlight: `.github/workflows/ios-testflight.yml` (manual `workflow_dispatch`, macos-26, fastlane `beta` lane; build number = run number; needs secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64, APPLE_TEAM_ID, DIST_CERT_P12_BASE64, DIST_CERT_PASSWORD).
