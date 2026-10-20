@@ -56,7 +56,7 @@ struct SettingsView: View {
                     Text("**Last backup:** \(st.lastBackup.map { Date(timeIntervalSince1970: $0 / 1000).formatted(date: .abbreviated, time: .shortened) } ?? "never")").font(.footnote)
                     Toggle("Include photos & pattern files (bigger file)", isOn: $includeFiles).font(.footnote)
                     HStack {
-                        Button { exportBackup() } label: { Text("Save backup").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
+                        Button { exportBackup() } label: { Text("Save backup").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent)
                         Button { showImport = true } label: { Text("Restore…").frame(maxWidth: .infinity) }.buttonStyle(.bordered)
                     }
                 }
@@ -162,7 +162,7 @@ struct AboutView: View {
                     Muted("$14.99, one-time purchase, no subscription.")
                     ProFeatureList()
                     if model.isPro { Text("✓ You have Pro. Thank you!") }
-                    else { Button { model.openPro() } label: { Text("Get Pro").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(.borderedProminent) }
+                    else { Button { model.openPro() } label: { Text("Get Pro").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent) }
                 }
                 Card {
                     Text("Free vs Pro").font(.headline)

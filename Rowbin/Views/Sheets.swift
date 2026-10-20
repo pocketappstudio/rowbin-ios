@@ -152,7 +152,7 @@ struct ProSheet: View {
                     } label: {
                         Text(store.priceText.isEmpty ? "Buy Pro" : "Buy Pro, \(store.priceText) one-time").font(.headline).frame(maxWidth: .infinity, minHeight: 50)
                     }
-                    .buttonStyle(.borderedProminent).disabled(store.busy)
+                    .buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent).disabled(store.busy)
                     Button { Task { await store.restore(); if store.isPro { dismiss() } } } label: {
                         Text("Restore Purchases").frame(maxWidth: .infinity, minHeight: 44)
                     }.buttonStyle(.bordered).disabled(store.busy)

@@ -19,7 +19,7 @@ struct ProjectsView: View {
                     HStack { Text("+ New project").font(.headline); if model.state.projects.count >= Engine.freeProjectLimit { ProTag() } }
                         .frame(maxWidth: .infinity, minHeight: 52)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent)
                 if model.isPro { Muted("Rowbin Pro ✓ Thank you!") }
                 else {
                     Text("Free: \(Engine.freeProjectLimit) projects. Pro: unlimited, one-time. [What’s included](rowbin-internal://about)")

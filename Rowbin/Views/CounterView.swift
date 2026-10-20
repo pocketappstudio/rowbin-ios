@@ -166,17 +166,17 @@ struct CounterView: View {
         let t = model.theme
         return HStack(spacing: 12) {
             Button { model.changeRows(projectID, -1) } label: {
-                Text("−").font(.system(size: 40, weight: .bold)).frame(maxWidth: .infinity, minHeight: 84)
+                Text("−").font(.system(size: 40, weight: .bold)).frame(width: 76, height: 84)
             }
-            .buttonStyle(.bordered).accessibilityLabel("Subtract a row")
+            .buttonStyle(.bordered).fixedSize().accessibilityLabel("Subtract a row")
             Button { model.undo(projectID) } label: {
-                VStack(spacing: 2) { Image(systemName: "arrow.uturn.backward"); Text("Undo").font(.caption) }.frame(maxWidth: .infinity, minHeight: 84)
+                VStack(spacing: 2) { Image(systemName: "arrow.uturn.backward"); Text("Undo").font(.caption).lineLimit(1).fixedSize() }.frame(width: 76, height: 84)
             }
-            .buttonStyle(.bordered).accessibilityLabel("Undo last change")
+            .buttonStyle(.bordered).fixedSize().accessibilityLabel("Undo last change")
             Button { inc() } label: {
-                Text("+").font(.system(size: 52, weight: .bold)).frame(maxWidth: .infinity, minHeight: 84)
+                Text("+").font(.system(size: 52, weight: .bold)).foregroundStyle(t.onAccent).frame(maxWidth: .infinity, minHeight: 84)
             }
-            .buttonStyle(.borderedProminent).layoutPriority(1).accessibilityLabel("Add a row")
+            .buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent).accessibilityLabel("Add a row")
         }
         .disabled(locked)
         .tint(t.accent)
@@ -252,7 +252,7 @@ struct CounterView: View {
                 Button(p.timer.runningSince != nil ? "Pause" : "Start") {
                     if model.isPro { model.update(projectID) { Engine.timerToggle(&$0) }; model.haptic(.normal) }
                     else { model.openPro("The project timer") }
-                }.buttonStyle(.borderedProminent)
+                }.buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent)
             }
         }
     }
@@ -377,7 +377,7 @@ struct CounterRow: View {
                 if let r = c.resetAt { Text("/\(r)").font(.footnote).foregroundStyle(model.theme.muted) }
             }.frame(minWidth: 44)
             Button { model.changeCounter(projectID, counter: c.id, 1) } label: { Text("+").font(.title2.bold()).frame(width: 44, height: 44) }
-                .buttonStyle(.borderedProminent).accessibilityLabel("\(c.name) plus one")
+                .buttonStyle(.borderedProminent).foregroundStyle(model.theme.onAccent).accessibilityLabel("\(c.name) plus one")
         }
         .disabled(false)
     }
