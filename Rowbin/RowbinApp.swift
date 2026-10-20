@@ -29,7 +29,7 @@ struct RowbinApp: App {
     }
     private func demoRoute() {
         #if DEBUG
-        if Demo.screen == "pro" { model.proSheetFeature = .some(nil) }
+        if Demo.screen == "pro" { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.proSheetFeature = .some(nil) } }
         if Demo.screen == "settings", let id = model.state.currentProject?.id { model.path = [.project(id), .settings] }
         #endif
     }
