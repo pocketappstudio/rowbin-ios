@@ -76,3 +76,9 @@ Widgets (free): add the Rowbin widget from the Home Screen or Lock Screen widget
 
 ## App Privacy
 Data Not Collected. The code has no networking of its own: no URLSession, analytics, ads or crash SDKs, and no third-party packages. The only outbound links are the Terms and Privacy pages, which open in Safari. StoreKit is handled by Apple. Voice uses SFSpeechRecognizer with requiresOnDeviceRecognition = true, and no audio or text is stored. Backups are files the user saves themselves.
+
+## Screenshots uploaded (from the real iOS app, simulator, CI run 39497269344 at 24e0b20)
+- 6.9" (APP_IPHONE_67, 1320×2868): 1-counter, 2-pattern, 3-markup, 4-voice, 5-settings, 6-dusk
+- 6.3" (APP_IPHONE_61, 1206×2622): the same six
+- IAP review screenshot: Pro sheet, 1320×2868 (run 39501373345)
+Local copies: /workspace/rowbin-store-shots/iphone-6.9/, /workspace/rowbin-store-shots/iphone-6.3/, /workspace/rowbin-store-shots/iap/pro-sheet-1320x2868.png
