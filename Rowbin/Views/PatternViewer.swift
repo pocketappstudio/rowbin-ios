@@ -140,12 +140,14 @@ struct PatternViewer: View {
             .background(t.card)
 
             HStack(spacing: 8) {
-                Button { moveLine(-1) } label: { Image(systemName: "arrowtriangle.up.fill").frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line up")
-                Button { moveLine(1) } label: { Image(systemName: "arrowtriangle.down.fill").frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line down")
-                Button { row(-1) } label: { Text("−").font(.title.bold()).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Subtract a row")
-                Text("\(project?.rows ?? 0)").font(.system(size: 34, weight: .bold, design: .rounded)).monospacedDigit().frame(minWidth: 64)
+                Button { moveLine(-1) } label: { Image(systemName: "arrowtriangle.up.fill").frame(width: 40, height: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line up")
+                Button { moveLine(1) } label: { Image(systemName: "arrowtriangle.down.fill").frame(width: 40, height: 60) }.buttonStyle(.bordered).accessibilityLabel("Move line down")
+                Button { row(-1) } label: { Text("−").font(.largeTitle.bold()).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.bordered).accessibilityLabel("Subtract a row")
+                    .frame(maxWidth: .infinity).layoutPriority(1)
+                Text("\(project?.rows ?? 0)").font(.system(size: 34, weight: .bold, design: .rounded)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6).frame(minWidth: 52)
                     .accessibilityLabel("Row \(project?.rows ?? 0)")
-                Button { row(1) } label: { Text("+").font(.largeTitle.bold()).foregroundStyle(model.theme.onAccent).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.borderedProminent).layoutPriority(1).accessibilityLabel("Add a row")
+                Button { row(1) } label: { Text("+").font(.largeTitle.bold()).foregroundStyle(model.theme.onAccent).frame(maxWidth: .infinity, minHeight: 60) }.buttonStyle(.borderedProminent).accessibilityLabel("Add a row")
+                    .frame(maxWidth: .infinity).layoutPriority(1)
             }
             .padding(10)
             .background(t.card)

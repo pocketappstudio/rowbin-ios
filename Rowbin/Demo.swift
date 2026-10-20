@@ -10,10 +10,15 @@ enum Demo {
         return a[i + 1]
     }()
     static var active: Bool { screen != nil }
+    static let theme: String? = {
+        let a = ProcessInfo.processInfo.arguments
+        guard let i = a.firstIndex(of: "-rowbinTheme"), i + 1 < a.count else { return nil }
+        return a[i + 1]
+    }()
 
     static func state() -> AppState {
         var s = AppState()
-        s.settings.theme = screen == "dusk" ? "dusk" : "calm"
+        s.settings.theme = theme ?? (screen == "dusk" ? "dusk" : "calm")
         s.settings.tipsSeen = true
         var p = Project(name: "Seed-stitch shawl", craft: "knit")
         p.rows = 42; p.target = 120
