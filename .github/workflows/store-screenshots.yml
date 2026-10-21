@@ -1,5 +1,10 @@
 name: App Store screenshots
-on: { workflow_dispatch: {} }
+on:
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: "Which sets: all, iphone or ipad"
+        default: all
 jobs:
   shots:
     runs-on: macos-15-intel
@@ -41,8 +46,16 @@ jobs:
             done
             xcrun simctl shutdown "$U"
           }
-          shoot "$(pick 'Pro Max')" iphone-6.9
-          shoot "$(pick 'Pro')" iphone-6.3
+          DEV="${{ github.event.inputs.devices || 'all' }}"
+          if [ "$DEV" != ipad ]; then
+            shoot "$(pick 'Pro Max')" iphone-6.9
+            shoot "$(pick 'Pro')" iphone-6.3
+          fi
+          if [ "$DEV" != iphone ]; then
+            IPAD=$(xcrun simctl list devicetypes -j | python3 -c "import json,sys; t=[d for d in json.load(sys.stdin)['devicetypes'] if d['name'].startswith('iPad Pro 13-inch (M4)')]; print(t[0]['identifier'])")
+            echo "iPad type: $IPAD"
+            shoot "$IPAD" ipad-13
+          fi
           python3 -c "import struct,glob; [print(f, struct.unpack('>II', open(f,'rb').read()[16:24])) for f in sorted(glob.glob('store/*/*.png'))]"
       - uses: actions/upload-artifact@v4
         with: { name: store-screenshots, path: store }
