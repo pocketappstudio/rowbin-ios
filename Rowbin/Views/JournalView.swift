@@ -16,6 +16,7 @@ struct JournalView: View {
 
     var body: some View {
         let t = model.theme
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(spacing: 14) {
                 paceCard(t)
@@ -40,6 +41,15 @@ struct JournalView: View {
                     }
                 }
             }.padding(16)
+        }
+        #if DEBUG
+        .onChange(of: card) { _, c in
+            // Screenshot demo only: bring the whole finish card (with its stats row) into view on smaller phones.
+            if Demo.screen == "journal", c != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { withAnimation(nil) { proxy.scrollTo("cardEnd", anchor: .bottom) } }
+            }
+        }
+        #endif
         }
         .background(t.background.ignoresSafeArea())
         .foregroundStyle(t.text)
@@ -107,6 +117,7 @@ struct JournalView: View {
             if let card {
                 Image(uiImage: card).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14))
                     .accessibilityLabel(FinishCard.summary(p))
+                    .padding(.bottom, 8).id("cardEnd")
                 ShareLink(item: Image(uiImage: card), preview: SharePreview(p.name, image: Image(uiImage: card))) {
                     Label("Share card", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                 }.buttonStyle(.bordered)
