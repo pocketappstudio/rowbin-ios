@@ -29,6 +29,7 @@ jobs:
           xcodebuild -project Rowbin.xcodeproj -scheme Rowbin -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO test 2>&1 | grep -E "Executed|error:|failed" | tail -5
       - name: Capture
         run: |
+          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow || true
           APP=build/Build/Products/Debug-iphonesimulator/Rowbin.app
           xcrun simctl list devicetypes | grep -E "Pro Max|iPhone 1[6-8] Pro" || true
           RT=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['isAvailable'] and x['platform']=='iOS']; print(r[-1]['identifier'])")
@@ -38,11 +39,21 @@ jobs:
             xcrun simctl boot "$U"; xcrun simctl bootstatus "$U" -b
             xcrun simctl status_bar "$U" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --operatorName "" --batteryState charged --batteryLevel 100
             xcrun simctl install "$U" "$APP"
+            # Warm-up launch: the first cold launch on the Intel runner can be slow.
+            xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo counter; sleep 20
             n=1
             for s in shaping gauge eyesfree journal counter pattern markup voice dusk pro; do
-              xcrun simctl terminate "$U" com.pocketappstudio.rowbin 2>/dev/null || true
-              sleep 2; xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo $s; sleep 12
-              xcrun simctl io "$U" screenshot --type=png "$D/raw/$n-$s.png"; n=$((n+1))
+              for try in 1 2 3 4; do
+                xcrun simctl terminate "$U" com.pocketappstudio.rowbin 2>/dev/null || true
+                sleep 3
+                xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo $s; sleep $((10 + try * 5))
+                xcrun simctl io "$U" screenshot --type=png "$D/raw/$n-$s.png"
+                # Retry if the app isn't running (crashed or not launched) or the frame is still the plain launch screen.
+                RUN=$(xcrun simctl spawn "$U" launchctl list | grep -c com.pocketappstudio.rowbin || true)
+                if [ "$RUN" -gt 0 ] && python3 tools/shot_ok.py "$D/raw/$n-$s.png"; then break; fi
+                echo "retry $s ($try)"
+              done
+              n=$((n+1))
             done
             xcrun simctl shutdown "$U"
           }
