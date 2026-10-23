@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-enum Route: Hashable { case project(String), settings, about }
+enum Route: Hashable { case project(String), settings, about, gauge(String), journal(String) }
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -105,6 +105,53 @@ final class AppModel: ObservableObject {
         guard let i = state.index(id) else { return }
         if Engine.changeCounter(&state.projects[i], id: cid, dir, locked: false) { save(); haptic(.normal) }
     }
+    // MARK: eyes-free counting
+    /// +1 / −1 / undo from the eyes-free screen: milestone haptics, and the count spoken when asked for
+    /// (or announced to VoiceOver, which always hears the new count).
+    func eyesFree(_ id: String, _ action: EyesFreeAction) {
+        guard let i = state.index(id) else { return }
+        if state.settings.locked { haptic(.soft); speakIfWanted("Locked", force: true); return }
+        let before = state.projects[i]
+        switch action {
+        case .add, .subtract:
+            let d = action == .add ? 1 : -1
+            if debounced("ef\(d)-" + id, 150) { return }
+            let r = Engine.changeRows(&state.projects[i], d, locked: false, pro: isPro)
+            if r.changed { save() }
+            let after = state.projects[i]
+            let m = d > 0 ? EyesFree.milestone(before: before, after: after) : .none
+            if r.reachedTarget { haptic(.strong) } else if r.changed { Haptics.milestone(m, enabled: state.settings.haptics) } else { haptic(r.feedback) }
+            var text = r.changed ? EyesFree.phrase(after, m) : "Row 0"
+            if r.reachedTarget { text += ". Target reached" }
+            speakIfWanted(text)
+        case .undo:
+            if Engine.undo(&state.projects[i]) { save(); haptic(.soft); speakIfWanted("Undone. Row \(state.projects[i].rows)") }
+            else { speakIfWanted("Nothing to undo", force: true) }
+        }
+    }
+    private func speakIfWanted(_ text: String, force: Bool = false) {
+        if state.settings.speakCount || UIAccessibility.isVoiceOverRunning || force { Speaker.shared.say(text) }
+    }
+
+    // MARK: journal
+    func addJournalPhoto(_ id: String, data: Data) {
+        guard let jpeg = ImageTools.downscaledJPEG(data, maxSide: 1400) else { showToast("Couldn't save that photo."); return }
+        let e = JournalEntry(kind: "photo", text: "")
+        do {
+            try SharedStore.putFile(JournalEntry.fileKey(project: id, entry: e.id), jpeg)
+            update(id) { p in
+                p.journal.append(e)
+                if p.journal.count > JournalMath.maxEntries { p.journal.removeFirst(p.journal.count - JournalMath.maxEntries) }
+            }
+            showToast("Photo added to the journal")
+        } catch { showToast("Couldn't save that photo.") }
+    }
+    func removeJournalEntry(_ id: String, entry: String) {
+        let k = JournalEntry.fileKey(project: id, entry: entry)
+        SharedStore.deleteFile(k); ImageCache.shared.drop(k)
+        update(id) { $0.journal.removeAll { $0.id == entry } }
+    }
+
     func restoreRow(_ id: String, _ row: Int) {
         update(id) { Engine.setRows(&$0, row, why: "Restored from history") }
         showToast("Back to row \(row). Undo is available.")
@@ -134,6 +181,7 @@ final class AppModel: ObservableObject {
     func deleteProject(_ id: String) {
         state.projects.removeAll { $0.id == id }
         SharedStore.deleteFile("photo:\(id)"); SharedStore.deleteFile("pattern:\(id)")
+        for k in SharedStore.fileKeys() where k.hasPrefix("jphoto:\(id).") { SharedStore.deleteFile(k) }
         if state.settings.lastProjectId == id { state.settings.lastProjectId = nil }
         save()
         path = []
@@ -172,6 +220,8 @@ final class AppModel: ObservableObject {
         update(id) { $0.hasPhoto = false }
     }
 }
+
+enum EyesFreeAction { case add, subtract, undo }
 
 enum ImageTools {
     static func downscaledJPEG(_ data: Data, maxSide: CGFloat) -> Data? {

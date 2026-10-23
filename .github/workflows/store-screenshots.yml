@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       devices:
-        description: "Which sets: all, iphone or ipad"
-        default: all
+        description: "Which sets: iphone, ipad or all (Rowbin 1.0 is iPhone-only)"
+        default: iphone
 jobs:
   shots:
     runs-on: macos-15-intel
@@ -34,19 +34,19 @@ jobs:
           RT=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['isAvailable'] and x['platform']=='iOS']; print(r[-1]['identifier'])")
           pick() { xcrun simctl list devicetypes -j | python3 -c "import json,sys,re; t=[d for d in json.load(sys.stdin)['devicetypes'] if re.fullmatch(r'iPhone \d+ $1', d['name'])]; t.sort(key=lambda d:int(re.findall(r'\d+',d['name'])[0])); print(t[-1]['identifier'])"; }
           shoot() { # devicetype folder
-            U=$(xcrun simctl create "shots-$2" "$1" "$RT"); D=store/$2; mkdir -p $D
+            U=$(xcrun simctl create "shots-$2" "$1" "$RT"); D=store/$2; mkdir -p $D/raw
             xcrun simctl boot "$U"; xcrun simctl bootstatus "$U" -b
             xcrun simctl status_bar "$U" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --operatorName "" --batteryState charged --batteryLevel 100
             xcrun simctl install "$U" "$APP"
             n=1
-            for s in counter pattern markup voice settings dusk pro; do
+            for s in shaping gauge eyesfree journal counter pattern markup voice dusk pro; do
               xcrun simctl terminate "$U" com.pocketappstudio.rowbin 2>/dev/null || true
               xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo $s; sleep 7
-              xcrun simctl io "$U" screenshot --type=png "$D/$n-$s.png"; n=$((n+1))
+              xcrun simctl io "$U" screenshot --type=png "$D/raw/$n-$s.png"; n=$((n+1))
             done
             xcrun simctl shutdown "$U"
           }
-          DEV="${{ github.event.inputs.devices || 'all' }}"
+          DEV="${{ github.event.inputs.devices || 'iphone' }}"
           if [ "$DEV" != ipad ]; then
             shoot "$(pick 'Pro Max')" iphone-6.9
             shoot "$(pick 'Pro')" iphone-6.3
@@ -56,6 +56,10 @@ jobs:
             echo "iPad type: $IPAD"
             shoot "$IPAD" ipad-13
           fi
+      - name: Add captions (same pixel size as the raw shots)
+        run: |
+          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
+          python3 tools/caption_shots.py store
           python3 -c "import struct,glob; [print(f, struct.unpack('>II', open(f,'rb').read()[16:24])) for f in sorted(glob.glob('store/*/*.png'))]"
       - uses: actions/upload-artifact@v4
         with: { name: store-screenshots, path: store }

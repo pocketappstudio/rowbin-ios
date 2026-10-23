@@ -30,6 +30,10 @@ struct RowbinApp: App {
     private func demoRoute() {
         #if DEBUG
         if Demo.screen == "pro" { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.proSheetFeature = .some(nil) } }
+        if let id = model.state.currentProject?.id {
+            if Demo.screen == "gauge" { model.path = [.project(id), .gauge(id)] }
+            if Demo.screen == "journal" { model.path = [.project(id), .journal(id)] }
+        }
         if Demo.screen == "settings", let id = model.state.currentProject?.id { model.path = [.project(id), .settings] }
         #endif
     }

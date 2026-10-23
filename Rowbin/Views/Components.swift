@@ -13,6 +13,8 @@ struct RootView: View {
                     case .project(let id): CounterView(projectID: id)
                     case .settings: SettingsView()
                     case .about: AboutView()
+                    case .gauge(let id): GaugeView(projectID: id)
+                    case .journal(let id): JournalView(projectID: id)
                     }
                 }
         }

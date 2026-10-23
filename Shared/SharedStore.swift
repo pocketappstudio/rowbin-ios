@@ -81,7 +81,7 @@ enum SharedStore {
     static func fileKeys() -> [String] {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: filesDir.path)) ?? []
         return names.compactMap { n -> String? in
-            for p in ["photo_", "pattern_"] where n.hasPrefix(p) { return String(p.dropLast()) + ":" + String(n.dropFirst(p.count)) }
+            for p in ["photo_", "pattern_", "jphoto_"] where n.hasPrefix(p) { return String(p.dropLast()) + ":" + String(n.dropFirst(p.count)) }
             return nil
         }
     }

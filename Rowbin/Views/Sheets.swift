@@ -125,6 +125,8 @@ struct ProFeatureList: View {
         VStack(alignment: .leading, spacing: 6) {
             Label("Unlimited projects (free: \(Engine.freeProjectLimit))", systemImage: "square.stack")
             Label("Unlimited extra & repeat counters (free: \(Engine.freeExtraCounters) per project)", systemImage: "plusminus")
+            Label("Shaping calculator: even increases & decreases, “every N rows” plans, live stitch count", systemImage: "triangle")
+            Label("Gauge & yarn planner: swatch vs pattern, count conversion, yarn estimate", systemImage: "ruler")
             Label("Pattern viewer for PDFs & photos with a movable line highlighter", systemImage: "doc.richtext")
             Label("Project timer that keeps running when the app is closed (editable)", systemImage: "timer")
             Label("Chart markup: pen, highlighter and eraser on your pattern", systemImage: "pencil.tip")

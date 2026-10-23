@@ -14,6 +14,8 @@ struct CounterView: View {
     @State private var counterEdit: CounterEditTarget?
     @State private var editTimer = false
     @State private var showPattern = false
+    @State private var editShaping = false
+    @State private var showEyesFree = false
     @State private var importPattern = false
     @State private var photoItem: PhotosPickerItem?
     @State private var confirmSpec: ConfirmSpec?
@@ -42,7 +44,10 @@ struct CounterView: View {
                             }
                             toolRow(proxy)
                             VoiceStatus(voice: voice)
+                            if model.isPro && p.shaping != nil { ShapingCard(projectID: projectID, editing: $editShaping).id("shaping") }
                             countersCard.id("counters")
+                            if !(model.isPro && p.shaping != nil) { ShapingCard(projectID: projectID, editing: $editShaping).id("shaping") }
+                            planningLinks
                             timerCard.id("timer")
                             notesCard.id("notes")
                             photoCard
@@ -107,11 +112,15 @@ struct CounterView: View {
         }
         .sheet(item: $counterEdit) { target in CounterSheet(projectID: projectID, counterID: target.counterID).environmentObject(model) }
         .sheet(isPresented: $editTimer) { TimerEditSheet(projectID: projectID).environmentObject(model) }
+        .sheet(isPresented: $editShaping) { ShapingSheet(projectID: projectID).environmentObject(model) }
+        .fullScreenCover(isPresented: $showEyesFree) { EyesFreeView(projectID: projectID).environmentObject(model) }
+        .onChange(of: showEyesFree) { _, v in if v { voice.stop() } }
         .modifier(VoiceSession(voice: voice, projectID: projectID))
         .onChange(of: showPattern) { _, v in if v { voice.stop() } }
         .onAppear {
             #if DEBUG
             if ["pattern", "markup"].contains(Demo.screen ?? "") { showPattern = true }
+            if Demo.screen == "eyesfree" { showEyesFree = true }
             #endif
         }
         .fullScreenCover(isPresented: $showPattern) { PatternViewer(projectID: projectID).environmentObject(model) }
@@ -198,6 +207,9 @@ struct CounterView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Chip(on: locked, label: locked ? "🔒 Locked" : "🔓 Lock") { model.toggleLock() }
+                Chip(on: false, label: "👁 Eyes-free") { showEyesFree = true }
+                    .accessibilityLabel("Eyes-free counting")
+                    .accessibilityHint("Opens a full-screen counter you can use without looking")
                 Chip(on: model.state.settings.keepAwake, label: "☀️ Keep screen on") {
                     model.state.settings.keepAwake.toggle(); model.save()
                     model.showToast(model.state.settings.keepAwake ? "Screen will stay on while counting" : "Screen can sleep normally")
@@ -207,6 +219,12 @@ struct CounterView: View {
                 Chip(on: p.timer.runningSince != nil, label: "⏱ Timer", pro: true) {
                     if model.isPro { withAnimation { proxy.scrollTo("timer", anchor: .center) } } else { model.openPro("The project timer") }
                 }
+                Chip(on: p.shaping != nil, label: "📐 Shaping", pro: true) {
+                    if model.isPro { if p.shaping == nil { editShaping = true } else { withAnimation { proxy.scrollTo("shaping", anchor: .top) } } }
+                    else { model.openPro("The shaping calculator") }
+                }
+                Chip(on: false, label: "📏 Gauge & yarn", pro: true) { model.path.append(.gauge(projectID)) }
+                Chip(on: false, label: "📔 Journal") { model.path.append(.journal(projectID)) }
                 Chip(on: false, label: "📝 Notes") { withAnimation { proxy.scrollTo("notes", anchor: .top) } }
                 Chip(on: false, label: "🕘 History") { withAnimation { proxy.scrollTo("history", anchor: .top) } }
             }
@@ -233,6 +251,15 @@ struct CounterView: View {
                 Muted("Use these for stitches, increases or a pattern repeat. A linked counter moves with every row. Set “repeat every N rows” and it starts over after N and counts the repeats you’ve finished.")
             }
             ForEach(p.counters) { c in CounterRow(c: c, projectID: projectID) { counterEdit = CounterEditTarget(counterID: c.id) } }
+        }
+    }
+
+    var planningLinks: some View {
+        Card {
+            Text("Plan & journal").font(.headline)
+            NavLinkRow(icon: "ruler", title: "Gauge & yarn planner", detail: "Compare your swatch, convert counts, estimate yarn", pro: true) { model.path.append(.gauge(projectID)) }
+            Divider()
+            NavLinkRow(icon: "book.closed", title: "Project journal", detail: "Sessions, photos, pace and a finish card", pro: false) { model.path.append(.journal(projectID)) }
         }
     }
 
@@ -330,6 +357,26 @@ struct CounterView: View {
     }
     func confirmDelete() {
         confirmSpec = ConfirmSpec(title: "Delete “\(p.name)”?", message: "This removes the project, its notes, photo and pattern from this phone. It can’t be undone unless you have a backup.", ok: "Delete") { model.deleteProject(projectID) }
+    }
+}
+
+struct NavLinkRow: View {
+    @EnvironmentObject var model: AppModel
+    let icon: String, title: String, detail: String
+    let pro: Bool
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.title3).foregroundStyle(model.theme.accent).frame(width: 28).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) { Text(title).font(.body.weight(.semibold)); if pro { ProTag() } }
+                    Muted(detail)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(model.theme.muted).accessibilityHidden(true)
+            }.contentShape(Rectangle())
+        }.buttonStyle(.plain)
     }
 }
 

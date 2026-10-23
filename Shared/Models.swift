@@ -187,6 +187,10 @@ struct Project: Codable, Identifiable, Equatable {
     var timer = ProjectTimer()
     var createdAt: Double = nowMs()
     var updatedAt: Double = nowMs()
+    var shaping: ShapingPlan? = nil      // Pro
+    var gauge: GaugeInfo? = nil          // Pro
+    var journal: [JournalEntry] = []
+    var finishedAt: Double? = nil
     var extras: [String: JSONValue] = [:]
 
     init(name: String = "My project", craft: String = "knit") {
@@ -195,7 +199,7 @@ struct Project: Codable, Identifiable, Equatable {
     }
     var isCrochet: Bool { craft == "crochet" }
 
-    enum CodingKeys: String, CodingKey, CaseIterable { case id, name, craft, rows, target, notes, hasPhoto, pattern, counters, undo, log, timer, createdAt, updatedAt }
+    enum CodingKeys: String, CodingKey, CaseIterable { case id, name, craft, rows, target, notes, hasPhoto, pattern, counters, undo, log, timer, createdAt, updatedAt, shaping, gauge, journal, finishedAt }
     /// "reminders" was removed in 2026-10; it is read as known so it is dropped, not carried along.
     static let known = CodingKeys.allCases.map(\.rawValue) + ["reminders"]
     init(from d: Decoder) throws {
@@ -207,6 +211,9 @@ struct Project: Codable, Identifiable, Equatable {
         undo = Array(c.val(.undo, [UndoSnap]()).suffix(Engine.undoCap))
         log = Array(c.val(.log, [LogEntry]()).suffix(Engine.logCap))
         timer = c.val(.timer, ProjectTimer()); createdAt = c.val(.createdAt, nowMs()); updatedAt = c.val(.updatedAt, nowMs())
+        shaping = c.val(.shaping, ShapingPlan?.none); gauge = c.val(.gauge, GaugeInfo?.none)
+        journal = Array(c.val(.journal, [JournalEntry]()).suffix(JournalMath.maxEntries))
+        finishedAt = c.val(.finishedAt, Double?.none)
         extras = Extras.read(d, known: Project.known)
     }
     func encode(to e: Encoder) throws {
@@ -215,6 +222,9 @@ struct Project: Codable, Identifiable, Equatable {
         try c.encodeIfPresent(target, forKey: .target); try c.encode(notes, forKey: .notes); try c.encode(hasPhoto, forKey: .hasPhoto)
         try c.encodeIfPresent(pattern, forKey: .pattern); try c.encode(counters, forKey: .counters); try c.encode(undo, forKey: .undo)
         try c.encode(log, forKey: .log); try c.encode(timer, forKey: .timer); try c.encode(createdAt, forKey: .createdAt); try c.encode(updatedAt, forKey: .updatedAt)
+        try c.encodeIfPresent(shaping, forKey: .shaping); try c.encodeIfPresent(gauge, forKey: .gauge)
+        if !journal.isEmpty { try c.encode(journal, forKey: .journal) }
+        try c.encodeIfPresent(finishedAt, forKey: .finishedAt)
         try Extras.write(extras, to: e, known: Project.known)
     }
 }
@@ -230,9 +240,10 @@ struct Settings: Codable, Equatable {
     var lastProjectId: String? = nil
     var createdAt: Double = nowMs()
     var reduceMotion: Bool = false   // Pro
+    var speakCount: Bool = false     // eyes-free mode: say the count (on-device speech)
     var extras: [String: JSONValue] = [:]
     init() {}
-    enum CodingKeys: String, CodingKey, CaseIterable { case theme, haptics, tapAnywhere, locked, keepAwake, tipsSeen, lastBackup, lastProjectId, createdAt, reduceMotion }
+    enum CodingKeys: String, CodingKey, CaseIterable { case theme, haptics, tapAnywhere, locked, keepAwake, tipsSeen, lastBackup, lastProjectId, createdAt, reduceMotion, speakCount }
     /// "license" is the web app's Gumroad key; it is never carried into the native apps.
     static let known = CodingKeys.allCases.map(\.rawValue) + ["license"]
     init(from d: Decoder) throws {
@@ -240,7 +251,7 @@ struct Settings: Codable, Equatable {
         theme = c.val(.theme, "oat"); haptics = c.val(.haptics, true); tapAnywhere = c.val(.tapAnywhere, false)
         locked = c.val(.locked, false); keepAwake = c.val(.keepAwake, false); tipsSeen = c.val(.tipsSeen, false)
         lastBackup = c.val(.lastBackup, Double?.none); lastProjectId = c.val(.lastProjectId, String?.none); createdAt = c.val(.createdAt, nowMs())
-        reduceMotion = c.val(.reduceMotion, false)
+        reduceMotion = c.val(.reduceMotion, false); speakCount = c.val(.speakCount, false)
         extras = Extras.read(d, known: Settings.known)
     }
     func encode(to e: Encoder) throws {
@@ -249,6 +260,7 @@ struct Settings: Codable, Equatable {
         try c.encode(locked, forKey: .locked); try c.encode(keepAwake, forKey: .keepAwake); try c.encode(tipsSeen, forKey: .tipsSeen)
         try c.encodeIfPresent(lastBackup, forKey: .lastBackup); try c.encodeIfPresent(lastProjectId, forKey: .lastProjectId)
         try c.encode(createdAt, forKey: .createdAt); try c.encode(reduceMotion, forKey: .reduceMotion)
+        try c.encode(speakCount, forKey: .speakCount)
         try Extras.write(extras, to: e, known: Settings.known)
     }
 }

@@ -20,6 +20,7 @@ struct SettingsView: View {
                     Toggle(isOn: setting(\.haptics)) { VStack(alignment: .leading) { Text("Vibrate on tap").bold(); Muted("A gentle tap from the Taptic Engine with each count.") } }
                         .onChange(of: st.haptics) { _, v in if v { model.haptic(.normal) } }
                     Toggle(isOn: setting(\.tapAnywhere)) { VStack(alignment: .leading) { Text("Tap anywhere on the number").bold(); Muted("Off by default so pocket taps and swipes can’t change your count.") } }
+                    Toggle(isOn: setting(\.speakCount)) { VStack(alignment: .leading) { Text("Speak the count in eyes-free mode").bold(); Muted("Says each new row out loud with your iPhone’s built-in voice. Nothing is recorded or sent anywhere.") } }
                     Toggle(isOn: setting(\.keepAwake)) { VStack(alignment: .leading) { Text("Keep screen on while counting").bold(); Muted("Stops the screen from sleeping on the counter.") } }
                 }
                 Card {

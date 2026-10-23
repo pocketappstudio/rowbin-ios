@@ -1,7 +1,7 @@
 #if DEBUG
 import UIKit
 
-/// DEBUG-only demo data for CI simulator screenshots: launch with `-rowbinDemo <counter|pattern|markup|settings|voice|dusk>`.
+/// DEBUG-only demo data for CI simulator screenshots: launch with `-rowbinDemo <shaping|gauge|eyesfree|journal|counter|pattern|markup|settings|voice|dusk|pro>`.
 /// Never compiled into TestFlight/App Store (Release) builds.
 enum Demo {
     static let screen: String? = {
@@ -32,9 +32,54 @@ enum Demo {
             Mark(id: "d3", page: 0, tool: "pen", color: "#2F6690", w: 0.009, pts: [0.7, 0.62, 0.78, 0.7, 0.86, 0.62]),
         ]
         p.pattern = pt
+        if ["shaping", "eyesfree"].contains(screen ?? "") {
+            p.name = "Raglan sleeve"
+            p.shaping = ShapingPlan(start: 84, steps: [
+                ShapeStep(id: "s1", kind: "every", dir: "dec", row: 6, count: 2, every: 6, times: 10),
+                ShapeStep(id: "s2", kind: "even", dir: "inc", row: 64, count: 8),
+            ])
+            p.target = 80
+        }
+        var g = GaugeInfo(); g.unit = "in"; g.per = 4; g.patSts = 22; g.patRows = 30
+        g.swSts = 21; g.swW = 4; g.swRows = 30; g.swH = 4.2; g.patYardage = 1200
+        g.skeinLen = 220; g.skeinGrams = 100; g.skeins = 5; g.margin = 10
+        p.gauge = g
+        // A few days of row history so the journal and pace stats have something to show.
+        let day = 86_400_000.0, now = nowMs()
+        p.createdAt = now - 6 * day
+        var logs: [LogEntry] = [LogEntry(t: p.createdAt, m: "Project created", r: 0)]
+        var row = 0
+        for (d, n) in [(6.0, 9), (5.0, 7), (3.0, 12), (1.0, 8), (0.1, 6)] {
+            let t0 = now - d * day
+            for k in 0..<n { logs.append(LogEntry(t: t0 + Double(k) * 120_000, m: "Row \(row) → \(row + 1)", r: row + 1)); row += 1 }
+        }
+        p.log = logs; p.rows = row
+        p.journal = [
+            JournalEntry(id: "j1", t: now - 5 * day + 900_000, kind: "note", text: "Swatched and washed. Going up a needle size."),
+            JournalEntry(id: "j2", t: now - 1 * day + 1_200_000, kind: "photo"),
+        ]
+        try? SharedStore.putFile(JournalEntry.fileKey(project: p.id, entry: "j2"), progressPhoto())
         s.projects = [p]; s.settings.lastProjectId = p.id
         try? SharedStore.putFile("pattern:\(p.id)", chartPDF())
         return s
+    }
+
+    /// A drawn "knitted fabric" image used as a demo progress photo.
+    static func progressPhoto() -> Data {
+        let size = CGSize(width: 900, height: 640)
+        let img = UIGraphicsImageRenderer(size: size).image { ctx in
+            UIColor(red: 0.84, green: 0.78, blue: 0.70, alpha: 1).setFill(); ctx.fill(CGRect(origin: .zero, size: size))
+            let colors = [UIColor(red: 0.71, green: 0.32, blue: 0.23, alpha: 1), UIColor(red: 0.80, green: 0.47, blue: 0.36, alpha: 1)]
+            for r in 0..<20 {
+                colors[(r / 4) % 2].setFill()
+                for c in 0..<30 {
+                    let x = CGFloat(c) * 30 + 2, y = CGFloat(r) * 32 + 2
+                    UIBezierPath(ovalIn: CGRect(x: x, y: y, width: 13, height: 28)).fill()
+                    UIBezierPath(ovalIn: CGRect(x: x + 13, y: y, width: 13, height: 28)).fill()
+                }
+            }
+        }
+        return img.jpegData(compressionQuality: 0.85) ?? Data()
     }
 
     /// A simple knitting-chart-like PDF page (grid with row numbers) drawn in code.
