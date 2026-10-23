@@ -65,7 +65,7 @@ struct JournalView: View {
         .confirm($confirmSpec)
         .onAppear {
             #if DEBUG
-            if Demo.screen == "journal" { card = FinishCard.render(project: p, theme: model.theme) }
+            if Demo.screen == "journal" { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { card = FinishCard.render(project: p, theme: model.theme) } }
             #endif
         }
     }

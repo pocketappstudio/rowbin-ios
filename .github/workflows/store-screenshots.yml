@@ -41,7 +41,7 @@ jobs:
             n=1
             for s in shaping gauge eyesfree journal counter pattern markup voice dusk pro; do
               xcrun simctl terminate "$U" com.pocketappstudio.rowbin 2>/dev/null || true
-              xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo $s; sleep 7
+              sleep 2; xcrun simctl launch "$U" com.pocketappstudio.rowbin -rowbinDemo $s; sleep 12
               xcrun simctl io "$U" screenshot --type=png "$D/raw/$n-$s.png"; n=$((n+1))
             done
             xcrun simctl shutdown "$U"
